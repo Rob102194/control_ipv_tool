@@ -13,6 +13,8 @@ from src.presentation.controllers import venta_controller
 from src.presentation.controllers import inventario_diario_controller
 from src.presentation.controllers import historial_controller
 from src.infrastructure.container import Container
+import webbrowser
+from threading import Timer
 
 from datetime import datetime
 
@@ -80,4 +82,60 @@ def create_app() -> Flask:
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    import threading
+    from waitress import serve
+    from pystray import Icon as TrayIcon, Menu, MenuItem
+    from PIL import Image
+    import signal
+    from src.icon import get_icon_image
+
+    # --- Configuration ---
+    PORT = int(os.environ.get("PORT", 5000))
+    URL = f"http://127.0.0.1:{PORT}"
+
+    # --- Server Control ---
+    server_thread = None
+    tray_icon = None
+
+    def run_server():
+        """Function to run the Waitress server."""
+        print(f"Starting server on {URL}")
+        serve(app, host="0.0.0.0", port=PORT)
+
+    def open_browser():
+        """Open the web browser to the application URL."""
+        webbrowser.open(URL)
+
+    def exit_action(icon, item):
+        """Function to stop the server and exit the application."""
+        print("Stopping server...")
+        # This is a bit abrupt but necessary to stop waitress from a different thread
+        os.kill(os.getpid(), signal.SIGTERM)
+        icon.stop()
+
+    # --- System Tray Icon Setup ---
+    def setup_tray():
+        """Sets up and runs the system tray icon."""
+        global tray_icon
+        
+        image = get_icon_image()
+
+        menu = Menu(
+            MenuItem('Open', open_browser, default=True),
+            MenuItem('Exit', exit_action)
+        )
+        tray_icon = TrayIcon("Inventario", image, "Inventario Restaurante", menu)
+        
+        # Open browser shortly after starting
+        Timer(1, open_browser).start()
+        
+        tray_icon.run()
+
+    # --- Main Execution ---
+    # Start the server in a background thread
+    server_thread = threading.Thread(target=run_server)
+    server_thread.daemon = True
+    server_thread.start()
+
+    # Run the system tray icon in the main thread
+    setup_tray()

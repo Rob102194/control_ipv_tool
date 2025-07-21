@@ -1,14 +1,27 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Table } from 'react-bootstrap';
 import EditableCell from './EditableCell';
+import { ThemeContext } from '../../contexts/ThemeContext';
 
 // Componente para renderizar la tabla de inventario de un área específica.
 function AreaIPVTab({ areaData, onItemChange, onCommentChange }) {
+    const { theme } = useContext(ThemeContext);
 
-    // Determina el estilo de la celda de diferencia.
+    // Determina el estilo de la celda de diferencia según el tema.
     const getDiferenciaStyle = (diferencia) => {
-        if (diferencia < 0) return { backgroundColor: '#8B0000' }; // Rojo oscuro para faltantes
-        if (diferencia > 0) return { backgroundColor: '#006400' }; // Verde oscuro para sobrantes
+        const isLight = theme === 'light';
+        if (diferencia < 0) {
+            return { 
+                backgroundColor: isLight ? '#d3636cff' : '#8B0000', // Rojo claro para light, oscuro para dark
+                color: isLight ? '#721C24' : 'white'
+            };
+        }
+        if (diferencia > 0) {
+            return { 
+                backgroundColor: isLight ? '#8beba2ff' : '#006400', // Verde claro para light, oscuro para dark
+                color: isLight ? '#155724' : 'white'
+            };
+        }
         return {};
     };
 

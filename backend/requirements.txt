@@ -9,3 +9,5 @@ dependency-injector
 waitress
 pandas
 pyinstaller
+pystray
+Pillow
