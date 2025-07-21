@@ -1,4 +1,5 @@
 import os
+import sys
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
@@ -32,7 +33,14 @@ def create_app() -> Flask:
         historial_controller
     ])
     
-    app = Flask(__name__)
+    if getattr(sys, 'frozen', False):
+        # Running as a PyInstaller bundle
+        static_folder = os.path.join(sys._MEIPASS, 'frontend/dist')
+    else:
+        # Running as a normal script
+        static_folder = '../frontend/dist'
+
+    app = Flask(__name__, static_folder=static_folder, static_url_path='/')
     app.container = container
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DB_URI', 'sqlite:///inventario.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -62,9 +70,10 @@ def create_app() -> Flask:
                 f" Error: {e}"
             )
 
-    @app.route('/')
-    def health_check():
-        return {'status': 'ok', 'message': 'Inventory API running'}
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def catch_all(path):
+        return app.send_static_file("index.html")
 
     return app
 
