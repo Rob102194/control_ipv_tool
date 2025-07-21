@@ -1,0 +1,10 @@
+flask
+flask-sqlalchemy
+flask-cors
+flask_migrate
+python-dotenv
+openpyxl
+sqlalchemy
+dependency-injector
+waitress
+pandas

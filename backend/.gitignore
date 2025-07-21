@@ -1,0 +1,82 @@
+# Byte-compiled / optimized / dll files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.so
+
+# C extensions
+*.exp
+*.lib
+*.dll
+
+# Distribution / packaging
+.Python
+build/
+dist/
+wheels/
+*.egg-info/
+.installed.tag
+
+# Environments
+.env/
+venv/
+env/
+ENV/
+*.venv
+*/bin/activate
+*/Scripts/activate.bat
+*/Scripts/activate
+
+# Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store # macOS specific
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Sphinx documentation
+docs/_build/
+
+# PyInstaller
+*.spec
+build/
+dist/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.nox/
+
+# mypy
+.mypy_cache/
+
+# black
+.black/
+
+# Ruff
+.ruff_cache/
+
+# Bandit
+.bandit/
+
+# Misc
+.cache/
+.pytest_cache/
+.pytype/
+.webassets-cache
+.spyproject/
+.ropeproject/
+.vscode-test/
+
+# OS-specific
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+Thumbs.db # Windows
