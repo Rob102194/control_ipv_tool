@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Container, Alert, Spinner, Form, Row, Col, Table } from 'react-bootstrap';
+import { Button, Container, Alert, Spinner, Form, Row, Col, Table, Modal } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
@@ -9,6 +9,7 @@ import * as Yup from 'yup';
 import recetaApi from '../../api/recetaApi';
 import * as productoApi from '../../api/productoApi';
 import areaApi from '../../api/areaApi';
+import ProductoForm from '../productos/ProductoForm';
 
 // Esquema de validación con Yup para el formulario de recetas
 const recetaSchema = Yup.object().shape({
@@ -35,6 +36,7 @@ const RecetaForm = () => {
   const [error, setError] = useState(''); // Almacena mensajes de error
   const [productos, setProductos] = useState([]); // Lista de productos para los select
   const [areas, setAreas] = useState([]); // Lista de áreas para los select
+  const [showProductoModal, setShowProductoModal] = useState(false);
 
   // Efecto para cargar datos necesarios (productos, áreas y la receta si se edita)
   useEffect(() => {
@@ -67,6 +69,16 @@ const RecetaForm = () => {
     
     cargarDependencias();
   }, [id]); // Se ejecuta cuando cambia el ID
+
+  const handleProductoCreado = async () => {
+    setShowProductoModal(false);
+    try {
+      const productosRes = await productoApi.obtenerProductos();
+      setProductos(productosRes.data);
+    } catch (error) {
+      setError('Error al recargar la lista de productos.');
+    }
+  };
 
   // Estado para los valores iniciales del formulario
   const [initialValues, setInitialValues] = useState({
@@ -155,13 +167,21 @@ const RecetaForm = () => {
             <h4 className="mb-3">Ingredientes</h4>
             
             {/* Botón para agregar un nuevo ingrediente */}
-            <Button
-              variant="outline-primary"
-              className="mb-3"
-              onClick={() => setFieldValue('ingredientes', [...values.ingredientes, { producto_id: '', area_id: '', cantidad: 1 }])}
-            >
-              Agregar Ingrediente
-            </Button>
+            <div className="mb-3">
+              <Button
+                variant="outline-primary"
+                onClick={() => setFieldValue('ingredientes', [...values.ingredientes, { producto_id: '', area_id: '', cantidad: 1 }])}
+              >
+                Agregar Ingrediente
+              </Button>
+              <Button
+                variant="outline-success"
+                className="ms-2"
+                onClick={() => setShowProductoModal(true)}
+              >
+                Crear Producto
+              </Button>
+            </div>
             
             {/* Muestra error general de ingredientes (ej. lista vacía) */}
             {touched.ingredientes && typeof errors.ingredientes === 'string' && (
@@ -281,6 +301,15 @@ const RecetaForm = () => {
           </Form>
         )}
       </Formik>
+
+      <Modal show={showProductoModal} onHide={() => setShowProductoModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Crear Nuevo Producto</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ProductoForm onProductoCreado={handleProductoCreado} />
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };

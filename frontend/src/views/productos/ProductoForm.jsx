@@ -6,16 +6,15 @@ import { obtenerProductoPorId, actualizarProducto, crearProducto } from '../../a
 
 // Lista de unidades de medida disponibles
 const unidadesMedida = [
-  'unidades',
+  'u',
   'kg',
-  'g',
   'l',
-  'ml',
-  'paquetes'
+  'trago',
+  'copa'
 ];
 
 // Componente de formulario para crear y editar productos
-const ProductoForm = () => {
+const ProductoForm = ({ onProductoCreado }) => {
   // Hooks para navegación y parámetros de URL
   const navigate = useNavigate();
   const { id } = useParams();
@@ -74,7 +73,12 @@ const ProductoForm = () => {
         // Crea si no hay ID
         await crearProducto(producto);
       }
-      navigate('/productos'); // Redirige a la lista
+      
+      if (onProductoCreado) {
+        onProductoCreado(); // Llama al callback si existe
+      } else {
+        navigate('/productos'); // Redirige si no es un modal
+      }
     } catch (err) {
       // Muestra el mensaje de error específico del backend si está disponible
       const errorMessage = err.response?.data?.error || 'Error al guardar el producto';
@@ -136,13 +140,15 @@ const ProductoForm = () => {
         
         {/* Botones de acción */}
         <div className="d-flex justify-content-end gap-2">
-          <Button 
-            variant="secondary" 
-            onClick={() => navigate('/productos')}
-            disabled={saving}
-          >
-            Cancelar
-          </Button>
+          {!onProductoCreado && (
+            <Button 
+              variant="secondary" 
+              onClick={() => navigate('/productos')}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+          )}
           <Button 
             variant="primary" 
             type="submit"

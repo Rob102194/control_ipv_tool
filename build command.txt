@@ -1,0 +1,1 @@
+backend\venv\Scripts\activate && python -m PyInstaller --noconfirm --onefile --windowed --icon="frontend/public/icon.png" --name "Control IPV" --add-data "frontend/dist;frontend/dist" --distpath "./dist" --hidden-import=dependency_injector.errors backend/app.py
