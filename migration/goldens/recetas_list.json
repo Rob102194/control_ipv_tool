@@ -1,0 +1,49 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/recetas/"
+  },
+  "response": {
+    "body": [
+      {
+        "activa": true,
+        "id": "rec-mojito",
+        "ingredientes": [
+          {
+            "area_id": "area-bar",
+            "cantidad": 0.05,
+            "id": "ing-3",
+            "producto_id": "prod-ron"
+          },
+          {
+            "area_id": "area-bar",
+            "cantidad": 1.0,
+            "id": "ing-4",
+            "producto_id": "prod-limon"
+          }
+        ],
+        "nombre": "MOJITO"
+      },
+      {
+        "activa": true,
+        "id": "rec-pasta",
+        "ingredientes": [
+          {
+            "area_id": "area-cocina",
+            "cantidad": 0.05,
+            "id": "ing-1",
+            "producto_id": "prod-aceite"
+          },
+          {
+            "area_id": "area-cocina",
+            "cantidad": 0.01,
+            "id": "ing-2",
+            "producto_id": "prod-sal"
+          }
+        ],
+        "nombre": "PASTA"
+      }
+    ],
+    "status": 200
+  }
+}

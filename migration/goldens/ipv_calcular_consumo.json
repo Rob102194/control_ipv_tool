@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/ipv/calcular-consumo?fecha=2026-09-05"
+  },
+  "response": {
+    "body": {
+      "prod-aceite|area-cocina": 0.5,
+      "prod-limon|area-bar": 8.0,
+      "prod-ron|area-bar": 0.4,
+      "prod-sal|area-cocina": 0.1
+    },
+    "status": 200
+  }
+}

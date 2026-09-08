@@ -1,0 +1,141 @@
+{
+  "request": {
+    "body": [
+      {
+        "area_id": "area-cocina",
+        "area_nombre": "COCINA",
+        "comentario": "",
+        "consumo": 0.5,
+        "entradas": 2.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 6.2,
+        "id": "s-1",
+        "inicio": 5.0,
+        "merma": 0.1,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-aceite",
+        "producto_nombre": "ACEITE"
+      },
+      {
+        "area_id": "area-cocina",
+        "area_nombre": "COCINA",
+        "comentario": "{\"merma\": \"\", \"diferencia\": \"faltan 50g\"}",
+        "consumo": 0.1,
+        "entradas": 0.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 1.85,
+        "id": "s-2",
+        "inicio": 2.0,
+        "merma": 0.0,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-sal",
+        "producto_nombre": "SAL"
+      },
+      {
+        "area_id": "area-bar",
+        "area_nombre": "BAR",
+        "comentario": "",
+        "consumo": 0.4,
+        "entradas": 1.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 3.6,
+        "id": "s-3",
+        "inicio": 3.0,
+        "merma": 0.0,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-ron",
+        "producto_nombre": "RON"
+      },
+      {
+        "area_id": "area-bar",
+        "area_nombre": "BAR",
+        "comentario": "",
+        "consumo": 8.0,
+        "entradas": 0.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 10.0,
+        "id": "s-4",
+        "inicio": 20.0,
+        "merma": 2.0,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-limon",
+        "producto_nombre": "LIMON"
+      }
+    ],
+    "method": "POST",
+    "url": "/api/ipv/guardar"
+  },
+  "response": {
+    "body": [
+      {
+        "area_id": "area-cocina",
+        "area_nombre": "COCINA",
+        "comentario": "",
+        "consumo": 0.5,
+        "diferencia": -0.20000000000000018,
+        "entradas": 2.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 6.2,
+        "final_teorico": 6.4,
+        "id": "s-1",
+        "inicio": 5.0,
+        "merma": 0.1,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-aceite",
+        "producto_nombre": "ACEITE"
+      },
+      {
+        "area_id": "area-cocina",
+        "area_nombre": "COCINA",
+        "comentario": "{\"merma\": \"\", \"diferencia\": \"faltan 50g\"}",
+        "consumo": 0.1,
+        "diferencia": -0.04999999999999982,
+        "entradas": 0.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 1.85,
+        "final_teorico": 1.9,
+        "id": "s-2",
+        "inicio": 2.0,
+        "merma": 0.0,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-sal",
+        "producto_nombre": "SAL"
+      },
+      {
+        "area_id": "area-bar",
+        "area_nombre": "BAR",
+        "comentario": "",
+        "consumo": 0.4,
+        "diferencia": 0.0,
+        "entradas": 1.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 3.6,
+        "final_teorico": 3.6,
+        "id": "s-3",
+        "inicio": 3.0,
+        "merma": 0.0,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-ron",
+        "producto_nombre": "RON"
+      },
+      {
+        "area_id": "area-bar",
+        "area_nombre": "BAR",
+        "comentario": "",
+        "consumo": 8.0,
+        "diferencia": 0.0,
+        "entradas": 0.0,
+        "fecha": "2026-09-05",
+        "final_fisico": 10.0,
+        "final_teorico": 10.0,
+        "id": "s-4",
+        "inicio": 20.0,
+        "merma": 2.0,
+        "otras_salidas": 0.0,
+        "producto_id": "prod-limon",
+        "producto_nombre": "LIMON"
+      }
+    ],
+    "status": 201
+  }
+}

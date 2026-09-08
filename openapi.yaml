@@ -1,0 +1,796 @@
+openapi: 3.1.0
+info:
+  title: Control IPV API
+  version: "0.1.0"
+  description: >
+    Contrato de la API HTTP de Control IPV. Extraído de la implementación Flask
+    (backend/src/presentation/controllers/*) en la Fase 0 de la migración a Go.
+    Es el contrato que la implementación Go debe reproducir (Fase 5). Salvo que
+    se indique lo contrario, todas las respuestas y cuerpos son JSON.
+
+    Convenciones heredadas de la versión Python:
+      * Los blueprints montan las rutas con barra final ("/api/productos/").
+      * Los errores devuelven {"error": "<mensaje>"}. La versión Python usa
+        mayormente 400 para cualquier fallo; la versión Go afinará los códigos
+        (404 / 409 / 422 / 500) — ver internal/httpapi/errors.go.
+      * `nombre` y `unidad_medida` se normalizan a MAYÚSCULAS en el servidor
+        (productos, áreas y recetas).
+
+servers:
+  - url: /api
+    description: Mismo origen (escritorio Wails o web)
+  - url: http://127.0.0.1:5175/api
+    description: cmd/server en desarrollo
+
+tags:
+  - name: productos
+  - name: areas
+  - name: recetas
+  - name: ventas
+  - name: ipv
+  - name: historial
+  - name: sistema
+
+paths:
+  /healthz:
+    get:
+      tags: [sistema]
+      summary: Estado del proceso (nuevo en la versión Go)
+      servers:
+        - url: /
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  time: { type: string, format: date-time }
+                  schema_version: { type: integer }
+        "503":
+          description: Base de datos inaccesible
+
+  # --------------------------------------------------------------- productos
+  /productos/:
+    get:
+      tags: [productos]
+      summary: Lista productos
+      parameters:
+        - name: sort_by
+          in: query
+          schema: { type: string, enum: [nombre, modificado, id], default: nombre }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Producto" }
+    post:
+      tags: [productos]
+      summary: Crea un producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductoInput" }
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Producto" }
+        "400": { $ref: "#/components/responses/Error" }
+        "409":
+          description: Ya existe un producto con ese nombre (Go)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /productos/{id}/:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [productos]
+      summary: Obtiene un producto
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Producto" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [productos]
+      summary: Actualiza un producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductoInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Producto" }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [productos]
+      summary: Elimina un producto
+      description: >
+        Falla si el producto está en uso en ingredientes, movimientos,
+        inventario_diario o modelo_ipv.
+      responses:
+        "204": { description: Eliminado }
+        "400":
+          description: Producto en uso
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /productos/export/:
+    get:
+      tags: [productos]
+      summary: Exporta productos a Excel
+      responses:
+        "200":
+          description: Fichero .xlsx (columnas nombre, unidad_medida)
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+  /productos/import/:
+    post:
+      tags: [productos]
+      summary: Importa productos desde Excel
+      description: Columnas obligatorias `nombre`, `unidad_medida`. Omite nombres ya existentes.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string } }
+        "400": { $ref: "#/components/responses/Error" }
+
+  # ------------------------------------------------------------------- areas
+  /areas/:
+    get:
+      tags: [areas]
+      summary: Lista áreas
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Area" }
+    post:
+      tags: [areas]
+      summary: Crea un área
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AreaInput" }
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Area" }
+        "400": { $ref: "#/components/responses/Error" }
+  /areas/{id}/:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [areas]
+      summary: Obtiene un área
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Area" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [areas]
+      summary: Actualiza un área
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AreaInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Area" }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [areas]
+      summary: Elimina un área
+      responses:
+        "204": { description: Eliminada }
+        "404": { $ref: "#/components/responses/Error" }
+
+  # ----------------------------------------------------------------- recetas
+  /recetas/:
+    get:
+      tags: [recetas]
+      summary: Lista recetas
+      parameters:
+        - name: sort_by
+          in: query
+          schema: { type: string, default: nombre }
+        - name: filter_by
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Receta" }
+    post:
+      tags: [recetas]
+      summary: Crea una receta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecetaInput" }
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Receta" }
+        "400": { $ref: "#/components/responses/Error" }
+  /recetas/{id}/:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [recetas]
+      summary: Obtiene una receta
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Receta" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [recetas]
+      summary: Actualiza una receta (reemplaza ingredientes)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecetaInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Receta" }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [recetas]
+      summary: Elimina una receta
+      responses:
+        "204": { description: Eliminada }
+        "404": { $ref: "#/components/responses/Error" }
+  /recetas/import/:
+    post:
+      tags: [recetas]
+      summary: Importa recetas desde Excel
+      description: >
+        Columnas: receta_nombre, producto_nombre, unidad_medida, cantidad,
+        area_nombre. Crea productos y áreas que no existan. Omite recetas ya
+        existentes por nombre.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string } }
+        "400": { $ref: "#/components/responses/Error" }
+  /recetas/export/:
+    get:
+      tags: [recetas]
+      summary: Exporta recetas a Excel
+      responses:
+        "200":
+          description: Fichero .xlsx
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+
+  # ------------------------------------------------------------------ ventas
+  /ventas/:
+    get:
+      tags: [ventas]
+      summary: Lista ventas
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Venta" }
+    post:
+      tags: [ventas]
+      summary: Crea una venta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VentaInput" }
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Venta" }
+        "400": { $ref: "#/components/responses/Error" }
+  /ventas/{id}/:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [ventas]
+      summary: Obtiene una venta
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Venta" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [ventas]
+      summary: Actualiza una venta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VentaInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Venta" }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [ventas]
+      summary: Elimina una venta
+      responses:
+        "204": { description: Eliminada }
+        "404": { $ref: "#/components/responses/Error" }
+  /ventas/delete-multiple/:
+    post:
+      tags: [ventas]
+      summary: Elimina varias ventas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items: { type: string }
+      responses:
+        "204": { description: Eliminadas }
+        "400": { $ref: "#/components/responses/Error" }
+  /ventas/importar/:
+    post:
+      tags: [ventas]
+      summary: Importa ventas desde Excel
+      description: >
+        Columnas `Nombre`, `Cantidad`. Crea automáticamente las recetas cuyo
+        nombre no exista (sin ingredientes). `fecha` opcional (form field); por
+        defecto la fecha actual del servidor.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+                fecha: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  ventas:
+                    type: array
+                    items: { $ref: "#/components/schemas/Venta" }
+                  nuevas_recetas:
+                    type: array
+                    items: { $ref: "#/components/schemas/Receta" }
+        "400": { $ref: "#/components/responses/Error" }
+        "500": { $ref: "#/components/responses/Error" }
+
+  # --------------------------------------------------------------------- ipv
+  /ipv/estado:
+    get:
+      tags: [ipv]
+      summary: Estado del inventario diario para una fecha
+      description: >
+        Si no hay registros guardados para la fecha, devuelve una plantilla
+        construida a partir del modelo de IPV de cada área, con `inicio`
+        arrastrado del `final_fisico` del día anterior.
+      parameters:
+        - $ref: "#/components/parameters/Fecha"
+      responses:
+        "200":
+          description: Mapa nombre de área -> filas de inventario
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items: { $ref: "#/components/schemas/InventarioDiario" }
+        "400": { $ref: "#/components/responses/Error" }
+  /ipv/calcular-consumo:
+    get:
+      tags: [ipv]
+      summary: Consumo por producto y área a partir de las ventas del día
+      parameters:
+        - $ref: "#/components/parameters/Fecha"
+      responses:
+        "200":
+          description: Mapa "producto_id|area_id" -> cantidad consumida
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: number }
+        "400": { $ref: "#/components/responses/Error" }
+  /ipv/calcular:
+    post:
+      tags: [ipv]
+      summary: Recalcula final_teorico y diferencia de un conjunto de filas (nuevo en Go)
+      description: >
+        Sustituye el recálculo que la versión Python hacía en el cliente
+        (useIPV.handleCalcularDiferencias). No persiste nada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/InventarioDiario" }
+      responses:
+        "200":
+          description: Filas con final_teorico y diferencia recalculados
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/InventarioDiario" }
+  /ipv/guardar:
+    post:
+      tags: [ipv]
+      summary: Guarda (upsert) el inventario diario
+      description: >
+        Upsert por (fecha, area_id, producto_id). El servidor recalcula
+        final_teorico y diferencia antes de persistir; los valores enviados en
+        esos campos se ignoran.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/InventarioDiario" }
+      responses:
+        "201":
+          description: Filas guardadas (con cálculos aplicados)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/InventarioDiario" }
+        "400": { $ref: "#/components/responses/Error" }
+        "500": { $ref: "#/components/responses/Error" }
+  /ipv/modelos:
+    get:
+      tags: [ipv]
+      summary: Modelos de IPV por área
+      responses:
+        "200":
+          description: Mapa area_id -> lista de {producto_id, orden}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      producto_id: { type: string }
+                      orden: { type: integer }
+    post:
+      tags: [ipv]
+      summary: Reemplaza el modelo de IPV de un área
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [area_id, productos]
+              properties:
+                area_id: { type: string }
+                productos:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id: { type: string, description: producto_id }
+                      orden: { type: integer }
+      responses:
+        "201":
+          description: Guardado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  area_id: { type: string }
+                  productos: { type: array, items: { type: object } }
+        "400": { $ref: "#/components/responses/Error" }
+  /ipv/registros:
+    get:
+      tags: [ipv]
+      summary: Fechas con registros de IPV (desc)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    fecha: { type: string, format: date }
+  /ipv/reporte:
+    get:
+      tags: [ipv]
+      summary: Reporte de IPV de una fecha
+      parameters:
+        - $ref: "#/components/parameters/Fecha"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReporteIPV" }
+        "404":
+          description: No hay registros para la fecha
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # --------------------------------------------------------------- historial
+  /historial/{entidad_tipo}/:
+    get:
+      tags: [historial]
+      summary: Historial de cambios de un tipo de entidad
+      parameters:
+        - name: entidad_tipo
+          in: path
+          required: true
+          schema: { type: string, examples: [Producto, Receta] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/HistorialCambios" }
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    Fecha:
+      name: fecha
+      in: query
+      required: true
+      schema: { type: string, format: date, examples: ["2026-09-05"] }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
+
+    Producto:
+      type: object
+      properties:
+        id: { type: string }
+        nombre: { type: string }
+        unidad_medida: { type: string }
+      required: [id, nombre, unidad_medida]
+    ProductoInput:
+      type: object
+      properties:
+        nombre: { type: string }
+        unidad_medida: { type: string }
+      required: [nombre, unidad_medida]
+
+    Area:
+      type: object
+      properties:
+        id: { type: string }
+        nombre: { type: string }
+        codigo: { type: [string, "null"] }
+      required: [id, nombre]
+    AreaInput:
+      type: object
+      properties:
+        nombre: { type: string }
+        codigo: { type: string }
+      required: [nombre]
+
+    Ingrediente:
+      type: object
+      properties:
+        id: { type: [string, "null"] }
+        producto_id: { type: string }
+        area_id: { type: string }
+        cantidad: { type: number }
+      required: [producto_id, area_id, cantidad]
+    Receta:
+      type: object
+      properties:
+        id: { type: string }
+        nombre: { type: string }
+        activa: { type: boolean }
+        ingredientes:
+          type: array
+          items: { $ref: "#/components/schemas/Ingrediente" }
+      required: [id, nombre, activa, ingredientes]
+    RecetaInput:
+      type: object
+      properties:
+        nombre: { type: string }
+        activa: { type: boolean, default: true }
+        ingredientes:
+          type: array
+          items: { $ref: "#/components/schemas/Ingrediente" }
+      required: [nombre]
+
+    Venta:
+      type: object
+      properties:
+        id: { type: string }
+        receta_nombre: { type: string }
+        cantidad: { type: integer }
+        fecha: { type: string, format: date }
+      required: [id, receta_nombre, cantidad, fecha]
+    VentaInput:
+      type: object
+      properties:
+        receta_nombre: { type: string }
+        cantidad: { type: integer }
+        fecha: { type: string, format: date }
+      required: [receta_nombre, cantidad]
+
+    InventarioDiario:
+      type: object
+      description: >
+        Una fila del IPV. En respuestas incluye producto_nombre y area_nombre.
+        `comentario` es una cadena JSON (mapa campo -> texto) o "".
+      properties:
+        id: { type: string }
+        fecha: { type: string, format: date }
+        area_id: { type: string }
+        producto_id: { type: string }
+        inicio: { type: number }
+        entradas: { type: number }
+        consumo: { type: number }
+        merma: { type: number }
+        otras_salidas: { type: number }
+        final_fisico: { type: number }
+        final_teorico: { type: number }
+        diferencia: { type: number }
+        producto_nombre: { type: [string, "null"] }
+        area_nombre: { type: [string, "null"] }
+        comentario: { type: [string, "null"] }
+      required: [fecha, area_id, producto_id]
+
+    ReporteIPV:
+      type: object
+      properties:
+        fecha: { type: string, format: date }
+        areas:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                producto: { type: string }
+                um: { type: string }
+                inicio: { type: number }
+                entradas: { type: number }
+                consumo: { type: number }
+                merma: { type: number }
+                otras_salidas: { type: number }
+                final_teorico: { type: number }
+                final_fisico: { type: number }
+                diferencia: { type: number }
+        resumen:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              faltantes: { type: array, items: { type: string } }
+              sobrantes: { type: array, items: { type: string } }
+              mermas: { type: array, items: { type: string } }
+        notas:
+          type: array
+          items: { type: string }
+
+    HistorialCambios:
+      type: object
+      properties:
+        id: { type: string }
+        entidad_tipo: { type: string }
+        entidad_id: { type: string }
+        campo_modificado: { type: string }
+        valor_anterior: { type: [string, "null"] }
+        valor_nuevo: { type: [string, "null"] }
+        fecha_cambio: { type: [string, "null"], format: date-time }

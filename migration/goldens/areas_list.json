@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/areas/"
+  },
+  "response": {
+    "body": [
+      {
+        "codigo": "COC",
+        "id": "area-cocina",
+        "nombre": "COCINA"
+      },
+      {
+        "codigo": "BAR",
+        "id": "area-bar",
+        "nombre": "BAR"
+      }
+    ],
+    "status": 200
+  }
+}
