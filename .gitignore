@@ -1,6 +1,6 @@
-# Ignorar archivos de compilación y distribución
-dist
-build
+# Ignorar archivos de compilación y distribución (PyInstaller, en la raíz)
+/dist
+/build
 
 # Ignorar archivos de configuración de Visual Studio Code
 .vscode
@@ -24,3 +24,7 @@ backend/**/__pycache__/
 # --- Frontend build ---
 frontend/dist/
 frontend/node_modules/
+# El SPA compilado va a web/dist/ y lo embebe Go. No se versiona (lo genera
+# `make frontend` / CI); se conserva .gitkeep para que `//go:embed` compile.
+web/dist/*
+!web/dist/.gitkeep

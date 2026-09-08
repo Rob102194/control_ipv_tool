@@ -19,6 +19,7 @@ import (
 	"github.com/Rob102194/control_ipv_tool/internal/app/usecases"
 	"github.com/Rob102194/control_ipv_tool/internal/httpapi"
 	"github.com/Rob102194/control_ipv_tool/internal/platform"
+	"github.com/Rob102194/control_ipv_tool/web"
 )
 
 func main() {
@@ -69,6 +70,7 @@ func run() error {
 		Services:      services,
 		CORSOrigins:   cfg.CORSOrigins,
 		SchemaVersion: func() (int64, error) { return sqlite.SchemaVersion(db) },
+		SPA:           web.Handler(),
 	})
 
 	srv := &http.Server{

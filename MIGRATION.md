@@ -12,7 +12,7 @@ Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-mig
 | 3 — Adapters | ✅ hecho | `internal/adapters/sqlite` (`Store` = `Repos` + `UnitOfWork`; 7 repos con SQL a mano vía `database/sql`, mapean fila→dominio; `withTx` para atomicidad) + `internal/adapters/excel` (excelize; parse/write productos, recetas, ventas). Tests de repo sobre BD temporal y de Excel contra fixtures generados por Python. `platform.SystemClock`/`UUIDGen`. |
 | 4 — Casos de uso | ✅ hecho | `internal/app/usecases` — solo importa `core/domain` y `core/ports`. Servicios por agregado (Producto/Area/Receta/Venta/IPV/Historial). Escrituras multi-paso + historial dentro de `UOW.Do`. `ObtenerEstado`/`GenerarReporte` con dominio; el reporte devuelve datos estructurados (el texto lo arma la Fase 5). Importaciones (productos/recetas/ventas) con la lógica de Python. Tests contra los goldens y fixtures. |
 | 5 — Capa HTTP | ✅ hecho | `internal/httpapi` — DTOs (`dto.go`) con claves = `to_dict` de Python; 23 rutas montadas en `router.go` (con y sin barra final); handlers en `handlers.go`/`excel_handlers.go`; `validator` en los cuerpos struct; `statusFor` mapea `domain.ValidationError→422`, `ConflictError→409`, `NotFoundError→404`, `ErrNoEncontrado→404`. `cmd/server` cablea `Store`+`Services`. **Arnés de paridad** (`parity_test.go`): la API Go reproduce los 8 goldens (listados, consumo, estado, guardar, reporte) — comparación estructural con ids normalizados. |
-| 6 — Frontend | ⏳ pendiente | |
+| 6 — Frontend | ✅ hecho | `client.js` → `/api` relativo (+ proxy Vite a `:5175` en dev); `useIPV.handleCalcularDiferencias` ahora llama a `POST /ipv/calcular` (fin del recálculo duplicado en el cliente); `react-beautiful-dnd` → `@hello-pangea/dnd`; `vite build` → `web/dist/`, embebido en Go (`web/embed.go`, `//go:embed`) y servido con fallback SPA. `cmd/server` sirve el SPA embebido. |
 | 7 — Shell Wails | ⏳ pendiente | `cmd/desktop` aún no existe |
 | 8 — Migración de datos | ⏳ pendiente | |
 | 9 — Web / móvil | ⏳ pendiente | `cmd/server` ya es la base |
@@ -83,6 +83,20 @@ backend/tests/         # caracterización de la versión Python (Fase 0)
   build de Wails y CI) y da control total sobre la coerción de tipos dinámicos de
   SQLite (`FLOAT` puede volver como int64/float64/NULL). El objetivo del plan
   (SQL crudo, sin ORM, repos que devuelven dominio) se cumple igual.
+
+## Decisiones de la Fase 6
+
+- **`web/dist/` no se versiona** (solo `web/dist/.gitkeep` para que `//go:embed
+  all:dist` compile); lo genera `make frontend` / CI antes de `make build`.
+- El SPA se sirve desde `web.Handler()`: fichero si existe, si no `index.html`
+  (fallback para el enrutador de React). Se monta como `r.Handle("/*", …)`
+  después de `/api` y `/healthz`.
+- En `npm run dev` Vite proxya `/api` → `http://127.0.0.1:5175` (el `cmd/server`).
+  Se levantan los dos: `make dev` + `make dev-front`.
+- Eliminado `frontend/public/icon.png:Zone.Identifier` (basura de Windows que
+  rompía `//go:embed` por el `:` en el nombre).
+- `eslint` del proyecto está roto de antes (mismatch eslint 8 / flat config); no
+  se tocó. `vite build` sí pasa.
 
 ## Decisiones de la Fase 5
 

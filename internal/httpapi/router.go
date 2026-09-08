@@ -20,6 +20,9 @@ type Deps struct {
 	CORSOrigins []string // vacío en escritorio (mismo origen)
 	// SchemaVersion, si se indica, expone la versión de migración en /healthz.
 	SchemaVersion func() (int64, error)
+	// SPA, si se indica, sirve el frontend embebido para toda ruta que no sea
+	// /api ni /healthz (con fallback a index.html).
+	SPA http.Handler
 }
 
 // NewRouter arma el http.Handler de la aplicación: middleware transversal, el
@@ -38,6 +41,10 @@ func NewRouter(d Deps) http.Handler {
 	if d.Services != nil {
 		a := &api{svc: d.Services, logger: d.Logger}
 		r.Route("/api", func(r chi.Router) { mountAPI(r, a) })
+	}
+
+	if d.SPA != nil {
+		r.Handle("/*", d.SPA)
 	}
 
 	return r

@@ -17,14 +17,23 @@ help: ## Muestra esta ayuda
 tidy: ## Ordena go.mod / go.sum
 	$(GO) mod tidy
 
+.PHONY: frontend
+frontend: ## Compila el SPA (frontend/) en web/dist/ para que Go lo embeba
+	cd frontend && npm ci && npm run build
+	@touch web/dist/.gitkeep   # vite --emptyOutDir lo borra; //go:embed lo necesita
+
 .PHONY: build
-build: ## Compila el servidor HTTP en bin/
+build: frontend ## Compila el frontend y el servidor HTTP en bin/
 	@mkdir -p $(BIN_DIR)
 	$(GO) build -o $(SERVER_BIN) ./cmd/server
 
 .PHONY: dev
-dev: ## Arranca el servidor HTTP (CONTROL_IPV_ENV=dev)
+dev: ## Arranca el servidor Go (usa el último web/dist compilado)
 	CONTROL_IPV_ENV=dev CONTROL_IPV_LOG_LEVEL=debug $(GO) run ./cmd/server
+
+.PHONY: dev-front
+dev-front: ## Arranca Vite con proxy /api -> :5175 (usar junto con `make dev`)
+	cd frontend && npm run dev
 
 .PHONY: test
 test: ## Ejecuta los tests
