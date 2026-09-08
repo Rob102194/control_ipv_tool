@@ -8,6 +8,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+
+	"github.com/Rob102194/control_ipv_tool/internal/core/domain"
+	"github.com/Rob102194/control_ipv_tool/internal/core/ports"
 )
 
 // Kind clasifica un error de negocio para traducirlo a un código HTTP.
@@ -47,6 +50,10 @@ func Internal(err error) *Error {
 }
 
 // statusFor traduce un error a (código HTTP, mensaje para el cliente).
+//
+// Reconoce tanto los errores de esta capa (*Error) como los del dominio
+// (*domain.ValidationError -> 422, *domain.ConflictError -> 409,
+// *domain.NotFoundError -> 404) y el centinela ports.ErrNoEncontrado -> 404.
 func statusFor(err error) (int, string) {
 	var e *Error
 	if errors.As(err, &e) {
@@ -60,6 +67,23 @@ func statusFor(err error) (int, string) {
 		}
 		return http.StatusInternalServerError, "Error interno del servidor"
 	}
+
+	var ve *domain.ValidationError
+	if errors.As(err, &ve) {
+		return http.StatusUnprocessableEntity, ve.Msg
+	}
+	var ce *domain.ConflictError
+	if errors.As(err, &ce) {
+		return http.StatusConflict, ce.Msg
+	}
+	var nf *domain.NotFoundError
+	if errors.As(err, &nf) {
+		return http.StatusNotFound, nf.Msg
+	}
+	if errors.Is(err, ports.ErrNoEncontrado) {
+		return http.StatusNotFound, "Recurso no encontrado"
+	}
+
 	return http.StatusInternalServerError, "Error interno del servidor"
 }
 

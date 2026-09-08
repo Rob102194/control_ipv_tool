@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Rob102194/control_ipv_tool/internal/adapters/sqlite"
+	"github.com/Rob102194/control_ipv_tool/internal/app/usecases"
 	"github.com/Rob102194/control_ipv_tool/internal/httpapi"
 	"github.com/Rob102194/control_ipv_tool/internal/platform"
 )
@@ -54,9 +55,18 @@ func run() error {
 		return err
 	}
 
+	store := sqlite.NewStore(db)
+	services := usecases.New(usecases.Deps{
+		Repos: store,
+		UOW:   store,
+		Clock: platform.SystemClock{},
+		IDs:   platform.UUIDGen{},
+	})
+
 	router := httpapi.NewRouter(httpapi.Deps{
 		Logger:        logger,
 		DB:            db,
+		Services:      services,
 		CORSOrigins:   cfg.CORSOrigins,
 		SchemaVersion: func() (int64, error) { return sqlite.SchemaVersion(db) },
 	})

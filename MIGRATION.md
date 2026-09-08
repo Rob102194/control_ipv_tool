@@ -11,7 +11,7 @@ Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-mig
 | 2 — Core + puertos | ✅ hecho | `internal/core/domain` (entidades puras, `CalcularDiferencias`, `CalcularConsumo`, tipo `Date`) sin deps externas; `internal/core/ports` (7 repos + `UnitOfWork`/`Repos` + `Clock`/`IDGen`); tests contra los goldens |
 | 3 — Adapters | ✅ hecho | `internal/adapters/sqlite` (`Store` = `Repos` + `UnitOfWork`; 7 repos con SQL a mano vía `database/sql`, mapean fila→dominio; `withTx` para atomicidad) + `internal/adapters/excel` (excelize; parse/write productos, recetas, ventas). Tests de repo sobre BD temporal y de Excel contra fixtures generados por Python. `platform.SystemClock`/`UUIDGen`. |
 | 4 — Casos de uso | ✅ hecho | `internal/app/usecases` — solo importa `core/domain` y `core/ports`. Servicios por agregado (Producto/Area/Receta/Venta/IPV/Historial). Escrituras multi-paso + historial dentro de `UOW.Do`. `ObtenerEstado`/`GenerarReporte` con dominio; el reporte devuelve datos estructurados (el texto lo arma la Fase 5). Importaciones (productos/recetas/ventas) con la lógica de Python. Tests contra los goldens y fixtures. |
-| 5 — Capa HTTP | ⏳ pendiente | arnés de paridad contra `migration/goldens/` |
+| 5 — Capa HTTP | ✅ hecho | `internal/httpapi` — DTOs (`dto.go`) con claves = `to_dict` de Python; 23 rutas montadas en `router.go` (con y sin barra final); handlers en `handlers.go`/`excel_handlers.go`; `validator` en los cuerpos struct; `statusFor` mapea `domain.ValidationError→422`, `ConflictError→409`, `NotFoundError→404`, `ErrNoEncontrado→404`. `cmd/server` cablea `Store`+`Services`. **Arnés de paridad** (`parity_test.go`): la API Go reproduce los 8 goldens (listados, consumo, estado, guardar, reporte) — comparación estructural con ids normalizados. |
 | 6 — Frontend | ⏳ pendiente | |
 | 7 — Shell Wails | ⏳ pendiente | `cmd/desktop` aún no existe |
 | 8 — Migración de datos | ⏳ pendiente | |
@@ -66,7 +66,8 @@ internal/adapters/excel/  # excelize: Parse/Write productos, recetas, ventas
 internal/app/usecases/  # servicios por agregado; solo depende de core/*
     services.go        # Deps, Services, New()
     ipv.go reporte.go importar.go views.go …
-internal/httpapi/       # router chi, middleware, errores tipados -> HTTP
+internal/httpapi/       # router, DTOs, handlers, errores tipados -> HTTP
+    dto.go handlers.go excel_handlers.go router.go parity_test.go
 migration/             # artefactos de paridad (Fase 0)
 openapi.yaml           # contrato (Fase 0)
 backend/tests/         # caracterización de la versión Python (Fase 0)
@@ -82,6 +83,28 @@ backend/tests/         # caracterización de la versión Python (Fase 0)
   build de Wails y CI) y da control total sobre la coerción de tipos dinámicos de
   SQLite (`FLOAT` puede volver como int64/float64/NULL). El objetivo del plan
   (SQL crudo, sin ORM, repos que devuelven dominio) se cumple igual.
+
+## Decisiones de la Fase 5
+
+- **DTOs en el paquete `httpapi`** (no un subpaquete `dto/`): structs con tags
+  `json` que replican el `to_dict` de Python; la serialización vive aquí.
+- **`pyFloat`** para los textos del reporte: `strconv.FormatFloat('g',-1,64)` y,
+  si el resultado no tiene `.`/`e`, se le añade `.0` (Python imprime `2.0`, Go
+  `2`). Los NÚMEROS JSON no se tocan: el arnés compara de forma estructural
+  (`2 == 2.0` como float64).
+- **Rutas con y sin barra final** (`/api/productos` y `/api/productos/`) porque
+  los blueprints Flask montaban con barra.
+- **Códigos de estado afinados** respecto a Python (que casi siempre daba 400):
+  `domain.ValidationError→422`, `ConflictError→409`, `NotFoundError→404`,
+  `ports.ErrNoEncontrado→404`. El arnés de paridad tolera esta diferencia.
+- **`validator` solo valida structs**; los cuerpos que son arrays
+  (`/ipv/guardar`, `/ipv/calcular`) se validan al mapear a dominio.
+- El **arnés de paridad** siembra el escenario con ids fijos directamente por el
+  `Store` (sin pasar por los casos de uso) para poder comparar; normaliza los
+  campos `"id"` antes del `reflect.DeepEqual` porque la plantilla de `/ipv/estado`
+  genera ids nuevos.
+- Pendiente (cosmético): el mensaje de error de `validator` sale crudo; se puede
+  traducir a algo legible en una pasada posterior.
 
 ## Decisiones de la Fase 4
 
