@@ -105,22 +105,35 @@ export const useIPV = () => {
         }
     }, [fecha]);
 
-    const handleCalcularDiferencias = useCallback(() => {
-        setInventario(prevInventario => {
-            const nuevoInventario = { ...prevInventario };
-            for (const areaNombre in nuevoInventario) {
-                nuevoInventario[areaNombre] = nuevoInventario[areaNombre].map(item => {
-                    if (item.final_fisico === null || item.final_fisico === undefined) {
-                        return item;
-                    }
-                    const final_teorico = (item.inicio + item.entradas) - item.consumo - item.merma - item.otras_salidas;
-                    const diferencia = item.final_fisico - final_teorico;
-                    return { ...item, final_teorico, diferencia };
-                });
-            }
-            return nuevoInventario;
+    // El cálculo de final_teorico y diferencia lo hace el backend (única fuente
+    // de verdad). Antes se recalculaba aquí, duplicando la regla del servidor.
+    const handleCalcularDiferencias = useCallback(async () => {
+        const filas = Object.values(inventario).flat().map(item => {
+            const it = { ...item };
+            if (it.comentarios) it.comentario = JSON.stringify(it.comentarios);
+            return it;
         });
-    }, []);
+        try {
+            const { data } = await ipvApi.calcular(filas);
+            const porClave = new Map(
+                data.map(d => [`${d.area_id}|${d.producto_id}`, d])
+            );
+            setInventario(prevInventario => {
+                const nuevoInventario = {};
+                for (const areaNombre in prevInventario) {
+                    nuevoInventario[areaNombre] = prevInventario[areaNombre].map(item => {
+                        const d = porClave.get(`${item.area_id}|${item.producto_id}`);
+                        if (!d) return item;
+                        return { ...item, final_teorico: d.final_teorico, diferencia: d.diferencia };
+                    });
+                }
+                return nuevoInventario;
+            });
+        } catch (err) {
+            setError('Error al calcular las diferencias.');
+            console.error(err);
+        }
+    }, [inventario]);
 
     const handleLimpiarDatos = useCallback(() => {
         setInventario(prevInventario => {

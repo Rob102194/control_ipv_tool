@@ -1,0 +1,88 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/ipv/reporte?fecha=2026-09-05"
+  },
+  "response": {
+    "body": {
+      "areas": {
+        "BAR": [
+          {
+            "consumo": 0.4,
+            "diferencia": 0.0,
+            "entradas": 1.0,
+            "final_fisico": 3.6,
+            "final_teorico": 3.6,
+            "inicio": 3.0,
+            "merma": 0.0,
+            "otras_salidas": 0.0,
+            "producto": "RON",
+            "um": "L"
+          },
+          {
+            "consumo": 8.0,
+            "diferencia": 0.0,
+            "entradas": 0.0,
+            "final_fisico": 10.0,
+            "final_teorico": 10.0,
+            "inicio": 20.0,
+            "merma": 2.0,
+            "otras_salidas": 0.0,
+            "producto": "LIMON",
+            "um": "U"
+          }
+        ],
+        "COCINA": [
+          {
+            "consumo": 0.5,
+            "diferencia": -0.20000000000000018,
+            "entradas": 2.0,
+            "final_fisico": 6.2,
+            "final_teorico": 6.4,
+            "inicio": 5.0,
+            "merma": 0.1,
+            "otras_salidas": 0.0,
+            "producto": "ACEITE",
+            "um": "L"
+          },
+          {
+            "consumo": 0.1,
+            "diferencia": -0.04999999999999982,
+            "entradas": 0.0,
+            "final_fisico": 1.85,
+            "final_teorico": 1.9,
+            "inicio": 2.0,
+            "merma": 0.0,
+            "otras_salidas": 0.0,
+            "producto": "SAL",
+            "um": "KG"
+          }
+        ]
+      },
+      "fecha": "2026-09-05",
+      "notas": [
+        "SAL (diferencia): faltan 50g"
+      ],
+      "resumen": {
+        "BAR": {
+          "faltantes": [],
+          "mermas": [
+            "LIMON: 2.0 U"
+          ],
+          "sobrantes": []
+        },
+        "COCINA": {
+          "faltantes": [
+            "ACEITE: 0.20000000000000018 L",
+            "SAL: 0.04999999999999982 KG"
+          ],
+          "mermas": [
+            "ACEITE: 0.1 L"
+          ],
+          "sobrantes": []
+        }
+      }
+    },
+    "status": 200
+  }
+}

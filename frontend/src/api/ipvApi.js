@@ -17,6 +17,11 @@ const ipvApi = {
     return apiClient.post('/ipv/guardar', data);
   },
 
+  // Recalcula final_teorico y diferencia en el servidor (sin persistir).
+  calcular: (data) => {
+    return apiClient.post('/ipv/calcular', data);
+  },
+
   // Obtiene los modelos de IPV.
   getModelos: () => {
     return apiClient.get('/ipv/modelos');

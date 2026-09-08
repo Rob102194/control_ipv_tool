@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/productos/"
+  },
+  "response": {
+    "body": [
+      {
+        "id": "prod-aceite",
+        "nombre": "ACEITE",
+        "unidad_medida": "L"
+      },
+      {
+        "id": "prod-limon",
+        "nombre": "LIMON",
+        "unidad_medida": "U"
+      },
+      {
+        "id": "prod-ron",
+        "nombre": "RON",
+        "unidad_medida": "L"
+      },
+      {
+        "id": "prod-sal",
+        "nombre": "SAL",
+        "unidad_medida": "KG"
+      }
+    ],
+    "status": 200
+  }
+}

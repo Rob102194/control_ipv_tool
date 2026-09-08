@@ -1,0 +1,20 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Control IPV",
+  "outputfilename": "Control IPV",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dir": "../../frontend",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "http://localhost:5173",
+  "wailsjsdir": "../../frontend/src",
+  "author": {
+    "name": "Rob102194"
+  },
+  "info": {
+    "companyName": "Control IPV",
+    "productName": "Control IPV",
+    "productVersion": "0.2.0",
+    "comments": "Control de inventario diario (IPV) para restaurante"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/ipv/estado?fecha=2026-09-05"
+  },
+  "response": {
+    "body": {
+      "BAR": [
+        {
+          "area_id": "area-bar",
+          "area_nombre": "BAR",
+          "comentario": "",
+          "consumo": 0.0,
+          "diferencia": 0.0,
+          "entradas": 0.0,
+          "fecha": "2026-09-05",
+          "final_fisico": 0.0,
+          "final_teorico": 0.0,
+          "id": "eae7debf-ca42-4622-be2c-5434eb224d15",
+          "inicio": 3.0,
+          "merma": 0.0,
+          "otras_salidas": 0.0,
+          "producto_id": "prod-ron",
+          "producto_nombre": "RON"
+        },
+        {
+          "area_id": "area-bar",
+          "area_nombre": "BAR",
+          "comentario": "",
+          "consumo": 0.0,
+          "diferencia": 0.0,
+          "entradas": 0.0,
+          "fecha": "2026-09-05",
+          "final_fisico": 0.0,
+          "final_teorico": 0.0,
+          "id": "3b3ec078-0e83-4ee7-8bae-2ce43c7bf208",
+          "inicio": 20.0,
+          "merma": 0.0,
+          "otras_salidas": 0.0,
+          "producto_id": "prod-limon",
+          "producto_nombre": "LIMON"
+        }
+      ],
+      "COCINA": [
+        {
+          "area_id": "area-cocina",
+          "area_nombre": "COCINA",
+          "comentario": "",
+          "consumo": 0.0,
+          "diferencia": 0.0,
+          "entradas": 0.0,
+          "fecha": "2026-09-05",
+          "final_fisico": 0.0,
+          "final_teorico": 0.0,
+          "id": "dd5b2c16-eab6-4432-a486-bf22d2683e48",
+          "inicio": 5.0,
+          "merma": 0.0,
+          "otras_salidas": 0.0,
+          "producto_id": "prod-aceite",
+          "producto_nombre": "ACEITE"
+        },
+        {
+          "area_id": "area-cocina",
+          "area_nombre": "COCINA",
+          "comentario": "",
+          "consumo": 0.0,
+          "diferencia": 0.0,
+          "entradas": 0.0,
+          "fecha": "2026-09-05",
+          "final_fisico": 0.0,
+          "final_teorico": 0.0,
+          "id": "b62dfc17-29b0-4cb9-9bd2-963c7e84ed5c",
+          "inicio": 2.0,
+          "merma": 0.0,
+          "otras_salidas": 0.0,
+          "producto_id": "prod-sal",
+          "producto_nombre": "SAL"
+        }
+      ]
+    },
+    "status": 200
+  }
+}

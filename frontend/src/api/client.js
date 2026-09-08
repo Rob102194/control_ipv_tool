@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// Obtiene la URL base de la API desde las variables de entorno de Vite.
-// Si no está definida, utiliza un valor predeterminado para el desarrollo local.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// URL base de la API. Por defecto es relativa ('/api'): funciona igual dentro
+// del escritorio (Wails sirve el SPA y la API en el mismo origen) y en un
+// despliegue web. En `npm run dev` el proxy de Vite (vite.config.js) redirige
+// '/api' al servidor Go local. VITE_API_BASE_URL permite apuntar a otro host.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

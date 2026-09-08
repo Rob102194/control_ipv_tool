@@ -1,6 +1,31 @@
-# Ignorar archivos de compilación y distribución
-dist
-build
+# Editor
+.vscode/
+.idea/
 
-# Ignorar archivos de configuración de Visual Studio Code   
-.vscode
+# --- Go ---
+/bin/
+*.test
+*.out
+coverage.txt
+
+# --- Bases de datos locales ---
+*.db
+*.db-shm
+*.db-wal
+
+# --- Wails ---
+cmd/desktop/build/bin/
+
+# --- Frontend build ---
+# vite compila a web/dist/ (lo embebe Go). frontend/dist/ solo existe para que
+# `wails build` no se queje de un frontend:dir sin dist; se conserva el placeholder.
+frontend/dist/*
+!frontend/dist/index.html
+frontend/node_modules/
+# El SPA compilado va a web/dist/ y lo embebe Go. No se versiona (lo genera
+# `make frontend` / CI); se conserva .gitkeep para que `//go:embed` compile.
+web/dist/*
+!web/dist/.gitkeep
+
+# macOS
+.DS_Store

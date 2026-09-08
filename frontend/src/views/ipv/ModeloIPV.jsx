@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Container, Row, Col, ListGroup, Form, Alert, Spinner, Table } from 'react-bootstrap';
 import { Typeahead } from 'react-bootstrap-typeahead';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import ipvApi from '../../api/ipvApi';
 import * as productoApi from '../../api/productoApi';

@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: # lanzar a mano para probar la build sin publicar Release
+
+permissions:
+  contents: write # crear el Release y subir binarios
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows/amd64
+            name: windows
+          - os: macos-latest
+            platform: darwin/universal
+            name: macos
+          - os: ubuntu-latest
+            platform: linux/amd64
+            name: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Dependencias de Wails (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Instalar Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.15.0
+
+      - name: Tests
+        run: go test ./...
+
+      # En un tag, sincroniza info.productVersion de wails.json con el tag (vX.Y.Z -> X.Y.Z).
+      - name: Fijar versión desde el tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          node -e "const f='cmd/desktop/wails.json';const j=require('./'+f);j.info=j.info||{};j.info.productVersion='${VERSION}';require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'\n')"
+          echo "productVersion = ${VERSION}"
+
+      - name: Build — Windows (instalador NSIS)
+        if: runner.os == 'Windows'
+        working-directory: cmd/desktop
+        run: wails build -clean -platform ${{ matrix.platform }} -nsis -webview2 download -o "Control IPV.exe"
+
+      - name: Build — macOS (.app universal en .zip)
+        if: runner.os == 'macOS'
+        working-directory: cmd/desktop
+        run: |
+          wails build -clean -platform ${{ matrix.platform }}
+          cd build/bin
+          ditto -c -k --keepParent "Control IPV.app" "Control-IPV-macos-universal.zip"
+          rm -rf "Control IPV.app"
+
+      - name: Build — Linux (binario en .tar.gz)
+        if: runner.os == 'Linux'
+        working-directory: cmd/desktop
+        run: |
+          wails build -clean -platform ${{ matrix.platform }} -o control-ipv
+          cd build/bin
+          tar -czf control-ipv-linux-amd64.tar.gz control-ipv
+          rm -f control-ipv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: control-ipv-${{ matrix.name }}
+          path: cmd/desktop/build/bin/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Listar artefactos
+        run: ls -laR dist
+
+      - name: Publicar Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          draft: false

@@ -10,13 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^17.0.0",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
     "formik": "^2.4.6",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "react": "^18.2.0",
-    "react-beautiful-dnd": "^13.1.1",
     "react-bootstrap": "^2.10.2",
     "react-bootstrap-typeahead": "^6.4.1",
     "react-dom": "^18.2.0",

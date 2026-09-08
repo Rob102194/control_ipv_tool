@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/ventas/"
+  },
+  "response": {
+    "body": [
+      {
+        "cantidad": 10,
+        "fecha": "2026-09-05",
+        "id": "v-1",
+        "receta_nombre": "PASTA"
+      },
+      {
+        "cantidad": 8,
+        "fecha": "2026-09-05",
+        "id": "v-2",
+        "receta_nombre": "MOJITO"
+      }
+    ],
+    "status": 200
+  }
+}
