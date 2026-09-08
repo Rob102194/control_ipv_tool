@@ -45,6 +45,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+          # Ubuntu 24.04 solo trae webkit2gtk-4.1; Wails necesita esta etiqueta.
+          echo "GOFLAGS=-tags=webkit2_41" >> "$GITHUB_ENV"
 
       - name: Instalar Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.15.0
@@ -79,7 +81,7 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: cmd/desktop
         run: |
-          wails build -clean -platform ${{ matrix.platform }} -o control-ipv
+          wails build -clean -platform ${{ matrix.platform }} -tags webkit2_41 -o control-ipv
           cd build/bin
           tar -czf control-ipv-linux-amd64.tar.gz control-ipv
           rm -f control-ipv
