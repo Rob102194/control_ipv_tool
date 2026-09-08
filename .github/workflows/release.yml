@@ -48,6 +48,10 @@ jobs:
           # Ubuntu 24.04 solo trae webkit2gtk-4.1; Wails necesita esta etiqueta.
           echo "GOFLAGS=-tags=webkit2_41" >> "$GITHUB_ENV"
 
+      - name: Instalar NSIS (Windows, para el instalador)
+        if: runner.os == 'Windows'
+        run: choco install nsis -y --no-progress
+
       - name: Instalar Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.15.0
 
