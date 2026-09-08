@@ -43,6 +43,9 @@ type VentaRow struct {
 	Nombre         string
 	Cantidad       float64
 	CantidadValida bool
+	// RawCantidad es el texto original de la celda Cantidad, para reproducir el
+	// mensaje "Cantidad inválida (<raw>)" de la versión Python.
+	RawCantidad string
 }
 
 // --- Import -----------------------------------------------------------
@@ -117,12 +120,14 @@ func ParseVentas(r io.Reader) ([]VentaRow, error) {
 		if nombre == "" {
 			continue
 		}
-		cant, ok := parseNumber(cell(row, idx["Cantidad"]))
+		raw := cell(row, idx["Cantidad"])
+		cant, ok := parseNumber(raw)
 		out = append(out, VentaRow{
 			Fila:           i + 2, // +1 por índice 0, +1 por la cabecera
 			Nombre:         nombre,
 			Cantidad:       cant,
 			CantidadValida: ok && cant > 0,
+			RawCantidad:    raw,
 		})
 	}
 	return out, nil

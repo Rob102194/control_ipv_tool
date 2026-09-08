@@ -10,7 +10,7 @@ Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-mig
 | 1 — Esqueleto Go | ✅ hecho | `cmd/server` arranca, migra con goose y responde `/healthz`; `go test ./...` verde |
 | 2 — Core + puertos | ✅ hecho | `internal/core/domain` (entidades puras, `CalcularDiferencias`, `CalcularConsumo`, tipo `Date`) sin deps externas; `internal/core/ports` (7 repos + `UnitOfWork`/`Repos` + `Clock`/`IDGen`); tests contra los goldens |
 | 3 — Adapters | ✅ hecho | `internal/adapters/sqlite` (`Store` = `Repos` + `UnitOfWork`; 7 repos con SQL a mano vía `database/sql`, mapean fila→dominio; `withTx` para atomicidad) + `internal/adapters/excel` (excelize; parse/write productos, recetas, ventas). Tests de repo sobre BD temporal y de Excel contra fixtures generados por Python. `platform.SystemClock`/`UUIDGen`. |
-| 4 — Casos de uso | ⏳ pendiente | |
+| 4 — Casos de uso | ✅ hecho | `internal/app/usecases` — solo importa `core/domain` y `core/ports`. Servicios por agregado (Producto/Area/Receta/Venta/IPV/Historial). Escrituras multi-paso + historial dentro de `UOW.Do`. `ObtenerEstado`/`GenerarReporte` con dominio; el reporte devuelve datos estructurados (el texto lo arma la Fase 5). Importaciones (productos/recetas/ventas) con la lógica de Python. Tests contra los goldens y fixtures. |
 | 5 — Capa HTTP | ⏳ pendiente | arnés de paridad contra `migration/goldens/` |
 | 6 — Frontend | ⏳ pendiente | |
 | 7 — Shell Wails | ⏳ pendiente | `cmd/desktop` aún no existe |
@@ -63,6 +63,9 @@ internal/adapters/sqlite/
     *_repo.go          # 7 repos, SQL a mano, fila -> dominio
     scan.go            # coerción de tipos, mapErr (UNIQUE -> ConflictError)
 internal/adapters/excel/  # excelize: Parse/Write productos, recetas, ventas
+internal/app/usecases/  # servicios por agregado; solo depende de core/*
+    services.go        # Deps, Services, New()
+    ipv.go reporte.go importar.go views.go …
 internal/httpapi/       # router chi, middleware, errores tipados -> HTTP
 migration/             # artefactos de paridad (Fase 0)
 openapi.yaml           # contrato (Fase 0)
@@ -79,6 +82,29 @@ backend/tests/         # caracterización de la versión Python (Fase 0)
   build de Wails y CI) y da control total sobre la coerción de tipos dinámicos de
   SQLite (`FLOAT` puede volver como int64/float64/NULL). El objetivo del plan
   (SQL crudo, sin ORM, repos que devuelven dominio) se cumple igual.
+
+## Decisiones de la Fase 4
+
+- **Servicios por agregado**, no un struct por caso de uso (más idiomático en Go,
+  igual de explícito): `ProductoService`, `AreaService`, `RecetaService`,
+  `VentaService`, `IPVService`, `HistorialService`, construidos por `usecases.New(Deps)`.
+- `internal/app/usecases` (sin tests) **solo importa `core/domain` y `core/ports`**
+  (verificado con `go list`).
+- Historial + escritura principal van en la misma `UOW.Do` (transaccional).
+- **`GenerarReporte` devuelve datos estructurados** (`ReporteIPV` con `[]ReporteDelta`,
+  `[]ReporteNota`); el formateo `"ACEITE: 0.2 L"` / `"SAL (diferencia): …"` lo hará
+  la Fase 5. Las notas conservan el orden de las claves del JSON del comentario
+  (parser ordenado con `json.Decoder`), igual que Python.
+- **Importaciones**: `ProductoService.Importar` / `RecetaService.Importar` /
+  `VentaService.Importar` reproducen la lógica de Python, incluido que la
+  importación NO normaliza nombres a MAYÚSCULAS y NO registra historial (quirk de
+  `ImportProductosExcel`/`ImportRecetasExcel`). El error de ventas inválidas
+  devuelve `*domain.ValidationError` con el texto `"Fila N: Cantidad inválida (raw)…"`
+  unido por saltos de línea (Python devolvía 400; Go dará 422).
+- **Tests de casos de uso sobre el `Store` de SQLite en fichero temporal**, no con
+  fakes: es una implementación en memoria legítima de los puertos, con más
+  fidelidad y menos código que reimplementar la lógica en un fake. Reloj e IDs sí
+  son dobles deterministas.
 
 ## Decisiones de la Fase 3
 
