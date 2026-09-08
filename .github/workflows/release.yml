@@ -50,7 +50,11 @@ jobs:
 
       - name: Instalar NSIS (Windows, para el instalador)
         if: runner.os == 'Windows'
-        run: choco install nsis -y --no-progress
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          # choco no pone makensis en el PATH del step siguiente; lo añadimos.
+          "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Instalar Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.15.0
