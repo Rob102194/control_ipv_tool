@@ -58,3 +58,7 @@ goldens: ## Regenera migration/goldens/*.json desde la versión Python
 .PHONY: schema-dump
 schema-dump: ## Regenera migration/schema_actual.sql desde models.py
 	$(VENV_PY) backend/tests/dump_schema.py
+
+.PHONY: excel-fixtures
+excel-fixtures: ## Regenera migration/goldens/fixtures/*.xlsx con el código Python
+	$(VENV_PY) backend/tests/make_excel_fixtures.py

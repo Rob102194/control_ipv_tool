@@ -9,7 +9,7 @@ Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-mig
 | 0 — Red de seguridad | ✅ hecho | `openapi.yaml`, `migration/schema_actual.sql`, `migration/goldens/`, tests de caracterización en `backend/tests/` |
 | 1 — Esqueleto Go | ✅ hecho | `cmd/server` arranca, migra con goose y responde `/healthz`; `go test ./...` verde |
 | 2 — Core + puertos | ✅ hecho | `internal/core/domain` (entidades puras, `CalcularDiferencias`, `CalcularConsumo`, tipo `Date`) sin deps externas; `internal/core/ports` (7 repos + `UnitOfWork`/`Repos` + `Clock`/`IDGen`); tests contra los goldens |
-| 3 — Adapters | ⏳ pendiente | |
+| 3 — Adapters | ✅ hecho | `internal/adapters/sqlite` (`Store` = `Repos` + `UnitOfWork`; 7 repos con SQL a mano vía `database/sql`, mapean fila→dominio; `withTx` para atomicidad) + `internal/adapters/excel` (excelize; parse/write productos, recetas, ventas). Tests de repo sobre BD temporal y de Excel contra fixtures generados por Python. `platform.SystemClock`/`UUIDGen`. |
 | 4 — Casos de uso | ⏳ pendiente | |
 | 5 — Capa HTTP | ⏳ pendiente | arnés de paridad contra `migration/goldens/` |
 | 6 — Frontend | ⏳ pendiente | |
@@ -59,6 +59,10 @@ internal/adapters/sqlite/
     db.go              # Open() con PRAGMA WAL/foreign_keys/busy_timeout
     migrate.go         # goose embebido
     migrations/00001_init.sql
+    store.go           # Store: ports.Repos + ports.UnitOfWork; querier; withTx
+    *_repo.go          # 7 repos, SQL a mano, fila -> dominio
+    scan.go            # coerción de tipos, mapErr (UNIQUE -> ConflictError)
+internal/adapters/excel/  # excelize: Parse/Write productos, recetas, ventas
 internal/httpapi/       # router chi, middleware, errores tipados -> HTTP
 migration/             # artefactos de paridad (Fase 0)
 openapi.yaml           # contrato (Fase 0)
@@ -70,6 +74,32 @@ backend/tests/         # caracterización de la versión Python (Fase 0)
 - El paquete de la capa HTTP es `internal/httpapi` (no `internal/http`) para no
   chocar con el `net/http` de la stdlib.
 - Se usa `Makefile` en vez de `Taskfile.yml` (`task` no está instalado; `make` sí).
+- **Fase 3: SQL a mano con `database/sql` en vez de sqlc.** El esquema es pequeño
+  y congelado; hacerlo a mano evita el tooling de codegen (relevante para el
+  build de Wails y CI) y da control total sobre la coerción de tipos dinámicos de
+  SQLite (`FLOAT` puede volver como int64/float64/NULL). El objetivo del plan
+  (SQL crudo, sin ORM, repos que devuelven dominio) se cumple igual.
+
+## Decisiones de la Fase 3
+
+- **`Store` es a la vez `ports.Repos` y `ports.UnitOfWork`.** Sin transacción
+  para lecturas/escrituras sueltas; `Do(ctx, func(Repos) error)` agrupa varias en
+  una transacción. Con `MaxOpenConns=1`, una transacción retiene la conexión —
+  aceptable en escritorio monousuario.
+- **`withTx`** hace que cada método de repo con varias sentencias (crear/actualizar
+  receta, guardar modelo, guardar IPV) sea atómico aunque se llame suelto; si ya
+  hay transacción (dentro de `Do`) la reutiliza.
+- **IDs los asigna siempre el caso de uso** (`ports.IDGen`); los repos exigen
+  `ID != ""` al insertar y nunca generan ids.
+- **`GuardarTodos` del IPV** usa `INSERT … ON CONFLICT(fecha,area_id,producto_id)
+  DO UPDATE` (upsert), sin tocar el `id` existente — como `save_all` de Python.
+- **Borrado de recetas**: se borran los ingredientes primero (la FK no tiene
+  `ON DELETE CASCADE`; en Python lo hacía el cascade del ORM).
+- **`RecetaRepository.CrearMultiples`** inserta solo cabeceras, sin ingredientes
+  (paridad con `crear_multiples`, usado al importar ventas).
+- **Excel**: el adaptador solo convierte bytes ⇄ filas tipadas; resolver
+  productos/áreas y persistir es del caso de uso (Fase 4). Fixtures de paridad en
+  `migration/goldens/fixtures/` (`make excel-fixtures`).
 
 ## Decisiones de la Fase 2
 

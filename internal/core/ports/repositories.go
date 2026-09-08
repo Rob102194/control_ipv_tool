@@ -21,14 +21,17 @@ const (
 type OrdenReceta int
 
 const (
-	OrdenRecetaNombre     OrdenReceta = iota
-	OrdenRecetaModificado             // por fecha del último cambio, desc
+	OrdenRecetaNombre     OrdenReceta = iota // alfabético (por defecto)
+	OrdenRecetaModificado                    // por fecha del último cambio, desc
+	OrdenRecetaReciente                      // por id, desc (rama "else" de la versión Python)
 )
 
 // ListarRecetasOpts agrupa los parámetros de RecetaRepository.Listar.
 type ListarRecetasOpts struct {
-	Orden  OrdenReceta
-	Filtro string // subcadena por nombre; "" = sin filtro
+	Orden OrdenReceta
+	// SoloSinIngredientes replica filter_by='sin_ingredientes' de la versión
+	// Python: devuelve únicamente las recetas que no tienen ingredientes.
+	SoloSinIngredientes bool
 }
 
 // --- Repositorios -------------------------------------------------------
