@@ -28,3 +28,6 @@ frontend/node_modules/
 # `make frontend` / CI); se conserva .gitkeep para que `//go:embed` compile.
 web/dist/*
 !web/dist/.gitkeep
+
+# macOS
+.DS_Store

@@ -1,7 +1,8 @@
 -- +goose Up
--- Esquema inicial. Reproduce literalmente el esquema de la versión Python 0.1.0
--- (ver migration/schema_actual.sql). Para una BD existente que se migra desde
--- la versión Python, goose se sella en esta versión como baseline (Fase 8).
+-- Esquema inicial. Reproduce el esquema REAL de la BD de producción de Control
+-- IPV (incluye `grupos` y `recetas.grupo_id`, que la versión Python de este
+-- repo aún no usa pero que existen en la base migrada). Para una BD preexistente
+-- goose se sella en esta versión sin ejecutarla (baseline, ver migrate.go).
 
 CREATE TABLE productos (
 	id VARCHAR(36) NOT NULL,
@@ -19,12 +20,21 @@ CREATE TABLE areas (
 	UNIQUE (nombre)
 );
 
+CREATE TABLE grupos (
+	id VARCHAR(36) NOT NULL,
+	nombre VARCHAR(50) NOT NULL,
+	PRIMARY KEY (id),
+	UNIQUE (nombre)
+);
+
 CREATE TABLE recetas (
 	id VARCHAR(36) NOT NULL,
 	nombre VARCHAR(100) NOT NULL,
 	activa BOOLEAN,
+	grupo_id VARCHAR(36),
 	PRIMARY KEY (id),
-	UNIQUE (nombre)
+	UNIQUE (nombre),
+	FOREIGN KEY(grupo_id) REFERENCES grupos (id)
 );
 
 CREATE TABLE ventas (
@@ -115,5 +125,6 @@ DROP TABLE ingredientes;
 DROP TABLE historial_cambios;
 DROP TABLE ventas;
 DROP TABLE recetas;
+DROP TABLE grupos;
 DROP TABLE areas;
 DROP TABLE productos;

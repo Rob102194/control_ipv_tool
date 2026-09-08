@@ -14,7 +14,7 @@ Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-mig
 | 5 — Capa HTTP | ✅ hecho | `internal/httpapi` — DTOs (`dto.go`) con claves = `to_dict` de Python; 23 rutas montadas en `router.go` (con y sin barra final); handlers en `handlers.go`/`excel_handlers.go`; `validator` en los cuerpos struct; `statusFor` mapea `domain.ValidationError→422`, `ConflictError→409`, `NotFoundError→404`, `ErrNoEncontrado→404`. `cmd/server` cablea `Store`+`Services`. **Arnés de paridad** (`parity_test.go`): la API Go reproduce los 8 goldens (listados, consumo, estado, guardar, reporte) — comparación estructural con ids normalizados. |
 | 6 — Frontend | ✅ hecho | `client.js` → `/api` relativo (+ proxy Vite a `:5175` en dev); `useIPV.handleCalcularDiferencias` ahora llama a `POST /ipv/calcular` (fin del recálculo duplicado en el cliente); `react-beautiful-dnd` → `@hello-pangea/dnd`; `vite build` → `web/dist/`, embebido en Go (`web/embed.go`, `//go:embed`) y servido con fallback SPA. `cmd/server` sirve el SPA embebido. |
 | 7 — Shell Wails | ✅ hecho | `internal/appboot` (cableado compartido); `cmd/desktop/main.go` (tag `desktop`) usa `AssetServer.Handler = router` (SPA + /api por el mismo handler), `SingleInstanceLock`, `OnBeforeClose` oculta a bandeja, bandeja best-effort con `energye/systray` (Abrir/Salir). `cmd/desktop/wails.json`. Compila con `go build -tags desktop ./cmd/desktop`; `wails build` en la máquina destino. |
-| 8 — Migración de datos | ⏳ pendiente | |
+| 8 — Migración de datos | ✅ hecho | Primer arranque: `platform.ImportLegacyIfNeeded` copia la `inventario.db` de la versión Python al datadir con `VACUUM INTO` (+ `.pre-go.bak`, `.imported-from.txt`, sin tocar el origen); `sqlite.Migrate` detecta la BD preexistente y **sella 00001 como baseline** sin recrear tablas. **Probado contra la BD real de producción** (229 productos, 16 892 ventas, 24 994 filas de IPV, 163 fechas): todos los endpoints responden. El esquema `00001` ahora incluye `grupos` y `recetas.grupo_id` (existen en producción; el código Go los preserva aunque no los use). |
 | 9 — Web / móvil | ⏳ pendiente | `cmd/server` ya es la base |
 
 ## Cómo trabajar
@@ -83,6 +83,22 @@ backend/tests/         # caracterización de la versión Python (Fase 0)
   build de Wails y CI) y da control total sobre la coerción de tipos dinámicos de
   SQLite (`FLOAT` puede volver como int64/float64/NULL). El objetivo del plan
   (SQL crudo, sin ORM, repos que devuelven dominio) se cumple igual.
+
+## Decisiones de la Fase 8
+
+- **Hallazgo**: la BD real de producción está por delante del código Python de
+  este repo: tiene `alembic_version = 65b880ef501d` (migración ausente), una
+  tabla `grupos` y `recetas.grupo_id`. El código Go NO usa esos campos pero el
+  esquema `00001` los incluye (para converger fresh-install y migrado) y los
+  repos no los tocan → los datos se preservan.
+- **Importación por copia, no in-place**: `VACUUM INTO` produce un fichero limpio
+  (WAL integrado) en el datadir; el original queda como respaldo natural y además
+  se hace `<db>.pre-go.bak`. Búsqueda del origen: `$CONTROL_IPV_IMPORT_DB`, luego
+  `./inventario.db`, `./backend/instance/inventario.db`, junto al ejecutable.
+- **Baseline**: si la BD trae `productos` pero no `goose_db_version`, se crea la
+  tabla de goose y se inserta `version_id=1` sin ejecutar el SQL de `00001`.
+- Solo ocurre en el primer arranque (cuando el datadir aún no tiene BD);
+  idempotente después.
 
 ## Decisiones de la Fase 7
 

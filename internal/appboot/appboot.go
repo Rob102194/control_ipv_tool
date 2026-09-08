@@ -44,6 +44,12 @@ func New(cfg platform.Config, logger *slog.Logger, spa http.Handler) (*App, erro
 	}
 	dbPath := platform.ResolveDBPath(dataDir, cfg.DBPath)
 
+	// Primer arranque de la versión Go: importa la BD de la versión Python si
+	// existe y aún no hay BD en el destino.
+	if err := platform.ImportLegacyIfNeeded(dbPath, logger); err != nil {
+		return nil, err
+	}
+
 	db, err := sqlite.Open(dbPath)
 	if err != nil {
 		return nil, err
