@@ -29,3 +29,7 @@ web/dist/*
 
 # macOS
 .DS_Store
+
+# Generado por wails dev/build
+frontend/package.json.md5
+frontend/src/wailsjs/
