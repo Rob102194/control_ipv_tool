@@ -23,6 +23,10 @@ type Deps struct {
 	// SPA, si se indica, sirve el frontend embebido para toda ruta que no sea
 	// /api ni /healthz (con fallback a index.html).
 	SPA http.Handler
+	// AuthMiddleware, si se indica, envuelve el grupo /api. Es el punto de
+	// extensión para el despliegue web (autenticación / multi-tenant). En
+	// escritorio es nil. Ver docs/web-roadmap.md.
+	AuthMiddleware func(http.Handler) http.Handler
 }
 
 // NewRouter arma el http.Handler de la aplicación: middleware transversal, el
@@ -40,7 +44,12 @@ func NewRouter(d Deps) http.Handler {
 
 	if d.Services != nil {
 		a := &api{svc: d.Services, logger: d.Logger}
-		r.Route("/api", func(r chi.Router) { mountAPI(r, a) })
+		r.Route("/api", func(r chi.Router) {
+			if d.AuthMiddleware != nil {
+				r.Use(d.AuthMiddleware)
+			}
+			mountAPI(r, a)
+		})
 	}
 
 	if d.SPA != nil {

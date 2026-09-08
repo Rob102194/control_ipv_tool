@@ -32,12 +32,23 @@ func (a *App) Close() error {
 	return nil
 }
 
-// New construye la App: resuelve el directorio de datos, abre y migra la BD,
-// cablea repositorios y casos de uso, y devuelve el http.Handler listo.
-//
-// spa es el handler del frontend embebido (puede ser nil: entonces las rutas
-// que no son /api ni /healthz dan 404).
+// Options son ajustes opcionales para New (extensiones del despliegue web).
+type Options struct {
+	// SPA es el handler del frontend embebido (nil: rutas no-API dan 404).
+	SPA http.Handler
+	// AuthMiddleware envuelve /api (nil en escritorio). Ver docs/web-roadmap.md.
+	AuthMiddleware func(http.Handler) http.Handler
+}
+
+// New construye la App: resuelve el directorio de datos, importa la BD legada si
+// procede, abre y migra la BD, cablea repositorios y casos de uso, y devuelve el
+// http.Handler listo.
 func New(cfg platform.Config, logger *slog.Logger, spa http.Handler) (*App, error) {
+	return NewWithOptions(cfg, logger, Options{SPA: spa})
+}
+
+// NewWithOptions es como New pero acepta Options.
+func NewWithOptions(cfg platform.Config, logger *slog.Logger, opts Options) (*App, error) {
 	dataDir, err := platform.EnsureDataDir(cfg.DataDir)
 	if err != nil {
 		return nil, err
@@ -68,12 +79,13 @@ func New(cfg platform.Config, logger *slog.Logger, spa http.Handler) (*App, erro
 	})
 
 	router := httpapi.NewRouter(httpapi.Deps{
-		Logger:        logger,
-		DB:            db,
-		Services:      services,
-		CORSOrigins:   cfg.CORSOrigins,
-		SchemaVersion: func() (int64, error) { return sqlite.SchemaVersion(db) },
-		SPA:           spa,
+		Logger:         logger,
+		DB:             db,
+		Services:       services,
+		CORSOrigins:    cfg.CORSOrigins,
+		SchemaVersion:  func() (int64, error) { return sqlite.SchemaVersion(db) },
+		SPA:            opts.SPA,
+		AuthMiddleware: opts.AuthMiddleware,
 	})
 
 	return &App{Handler: router, DB: db, DBPath: dbPath, Logger: logger}, nil
