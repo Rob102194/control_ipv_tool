@@ -2,11 +2,15 @@
 
 Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-migration`.
 
+**Fases 0–9 completas.** La versión Python (`backend/`) se eliminó del árbol tras
+validar la paridad; sigue en el historial de git (hasta el commit anterior a "Se
+elimina la versión Python") por si hiciera falta consultarla o regenerar goldens.
+
 ## Estado
 
 | Fase | Estado | Notas |
 |------|--------|-------|
-| 0 — Red de seguridad | ✅ hecho | `openapi.yaml`, `migration/schema_actual.sql`, `migration/goldens/`, tests de caracterización en `backend/tests/` |
+| 0 — Red de seguridad | ✅ hecho | `openapi.yaml`, `migration/schema_actual.sql`, `migration/goldens/` (+ fixtures Excel) — capturados desde la versión Python, ya congelados |
 | 1 — Esqueleto Go | ✅ hecho | `cmd/server` arranca, migra con goose y responde `/healthz`; `go test ./...` verde |
 | 2 — Core + puertos | ✅ hecho | `internal/core/domain` (entidades puras, `CalcularDiferencias`, `CalcularConsumo`, tipo `Date`) sin deps externas; `internal/core/ports` (7 repos + `UnitOfWork`/`Repos` + `Clock`/`IDGen`); tests contra los goldens |
 | 3 — Adapters | ✅ hecho | `internal/adapters/sqlite` (`Store` = `Repos` + `UnitOfWork`; 7 repos con SQL a mano vía `database/sql`, mapean fila→dominio; `withTx` para atomicidad) + `internal/adapters/excel` (excelize; parse/write productos, recetas, ventas). Tests de repo sobre BD temporal y de Excel contra fixtures generados por Python. `platform.SystemClock`/`UUIDGen`. |
@@ -19,18 +23,23 @@ Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-mig
 
 ## Cómo trabajar
 
-Requisitos: Go 1.26+, Python 3.14 (solo Fase 0), Node 24 (frontend), Wails v2 (Fase 7).
+Requisitos: Go 1.26+, Node 24 (frontend). Para el escritorio: Wails v2 CLI
+(`go install github.com/wailsapp/wails/v2/cmd/wails@latest`).
 
 ```sh
-make help          # lista de objetivos
-make dev           # arranca cmd/server en :5175 (CONTROL_IPV_ENV=dev)
-make check         # go mod tidy + go vet + go test ./...
-make goldens       # regenera migration/goldens/ desde la versión Python
-make schema-dump   # regenera migration/schema_actual.sql
+make help            # lista de objetivos
+make dev             # arranca cmd/server en :5175
+make dev-front       # arranca Vite (proxy /api -> :5175); usar junto a `make dev`
+make check           # go mod tidy + go vet + go test ./...
+make frontend        # compila el SPA en web/dist/ (lo embebe Go)
+make build           # frontend + binario del servidor en bin/
+make desktop-compile # comprueba que cmd/desktop compila (sin empaquetar)
+make wails-build     # ejecutable de escritorio (en la máquina destino)
 ```
 
-El venv de Python de la Fase 0 se crea con:
-`python3 -m venv backend/.venv && backend/.venv/bin/pip install -r backend/requirements.txt pytest pyyaml`
+Los goldens de paridad (`migration/goldens/`, `migration/schema_actual.sql`)
+están **congelados**: capturan Python 0.1.0. El generador vivía en `backend/`
+(eliminado); recuperable del historial git.
 
 ## Configuración (variables de entorno)
 
@@ -68,9 +77,8 @@ internal/app/usecases/  # servicios por agregado; solo depende de core/*
     ipv.go reporte.go importar.go views.go …
 internal/httpapi/       # router, DTOs, handlers, errores tipados -> HTTP
     dto.go handlers.go excel_handlers.go router.go parity_test.go
-migration/             # artefactos de paridad (Fase 0)
-openapi.yaml           # contrato (Fase 0)
-backend/tests/         # caracterización de la versión Python (Fase 0)
+migration/             # artefactos de paridad congelados (goldens, fixtures, schema)
+openapi.yaml           # contrato de la API
 ```
 
 ## Desviaciones respecto al plan

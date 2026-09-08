@@ -1,9 +1,6 @@
-# Ignorar archivos de compilación y distribución (PyInstaller, en la raíz)
-/dist
-/build
-
-# Ignorar archivos de configuración de Visual Studio Code
-.vscode
+# Editor
+.vscode/
+.idea/
 
 # --- Go ---
 /bin/
@@ -16,10 +13,8 @@ coverage.txt
 *.db-shm
 *.db-wal
 
-# --- Python (Fase 0) ---
-backend/.venv/
-backend/**/__pycache__/
-.pytest_cache/
+# --- Wails ---
+cmd/desktop/build/bin/
 
 # --- Frontend build ---
 frontend/dist/

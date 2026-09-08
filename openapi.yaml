@@ -3,9 +3,8 @@ info:
   title: Control IPV API
   version: "0.1.0"
   description: >
-    Contrato de la API HTTP de Control IPV. Extraído de la implementación Flask
-    (backend/src/presentation/controllers/*) en la Fase 0 de la migración a Go.
-    Es el contrato que la implementación Go debe reproducir (Fase 5). Salvo que
+    Contrato de la API HTTP de Control IPV. Se extrajo de la implementación Flask
+    original y lo reproduce la implementación Go (`internal/httpapi`). Salvo que
     se indique lo contrario, todas las respuestas y cuerpos son JSON.
 
     Convenciones heredadas de la versión Python:

@@ -1,5 +1,5 @@
-# Control IPV — migración a Go + Wails (camino A).
-# Objetivos de desarrollo del backend Go. El frontend sigue en frontend/.
+# Control IPV — Go + Wails.
+# Backend Go en cmd/ + internal/; frontend React en frontend/.
 
 GO        ?= go
 BIN_DIR   ?= bin
@@ -74,18 +74,7 @@ check: tidy vet test ## tidy + vet + test
 clean: ## Borra artefactos de compilación
 	rm -rf $(BIN_DIR)
 
-# --- Fase 0: artefactos de paridad (requieren backend/.venv) ---
-
-VENV_PY := backend/.venv/bin/python
-
-.PHONY: goldens
-goldens: ## Regenera migration/goldens/*.json desde la versión Python
-	$(VENV_PY) -m pytest backend/tests -q
-
-.PHONY: schema-dump
-schema-dump: ## Regenera migration/schema_actual.sql desde models.py
-	$(VENV_PY) backend/tests/dump_schema.py
-
-.PHONY: excel-fixtures
-excel-fixtures: ## Regenera migration/goldens/fixtures/*.xlsx con el código Python
-	$(VENV_PY) backend/tests/make_excel_fixtures.py
+# Los artefactos de paridad (migration/goldens/, migration/schema_actual.sql)
+# están congelados: capturan el comportamiento de la versión Python 0.1.0.
+# El generador vivía en backend/ (eliminado); recuperable del historial git
+# si alguna vez hiciera falta regenerarlos.
