@@ -1,0 +1,2 @@
+# Marcador para que //go:embed all:dist compile antes de que vite genere el SPA.
+# `npm run build` (--emptyOutDir) lo borra; `make frontend` y el CI lo recrean.
