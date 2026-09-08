@@ -13,7 +13,7 @@ Plan completo: artefacto "Control IPV a Go + Wails". Rama: `feature/go-wails-mig
 | 4 — Casos de uso | ✅ hecho | `internal/app/usecases` — solo importa `core/domain` y `core/ports`. Servicios por agregado (Producto/Area/Receta/Venta/IPV/Historial). Escrituras multi-paso + historial dentro de `UOW.Do`. `ObtenerEstado`/`GenerarReporte` con dominio; el reporte devuelve datos estructurados (el texto lo arma la Fase 5). Importaciones (productos/recetas/ventas) con la lógica de Python. Tests contra los goldens y fixtures. |
 | 5 — Capa HTTP | ✅ hecho | `internal/httpapi` — DTOs (`dto.go`) con claves = `to_dict` de Python; 23 rutas montadas en `router.go` (con y sin barra final); handlers en `handlers.go`/`excel_handlers.go`; `validator` en los cuerpos struct; `statusFor` mapea `domain.ValidationError→422`, `ConflictError→409`, `NotFoundError→404`, `ErrNoEncontrado→404`. `cmd/server` cablea `Store`+`Services`. **Arnés de paridad** (`parity_test.go`): la API Go reproduce los 8 goldens (listados, consumo, estado, guardar, reporte) — comparación estructural con ids normalizados. |
 | 6 — Frontend | ✅ hecho | `client.js` → `/api` relativo (+ proxy Vite a `:5175` en dev); `useIPV.handleCalcularDiferencias` ahora llama a `POST /ipv/calcular` (fin del recálculo duplicado en el cliente); `react-beautiful-dnd` → `@hello-pangea/dnd`; `vite build` → `web/dist/`, embebido en Go (`web/embed.go`, `//go:embed`) y servido con fallback SPA. `cmd/server` sirve el SPA embebido. |
-| 7 — Shell Wails | ⏳ pendiente | `cmd/desktop` aún no existe |
+| 7 — Shell Wails | ✅ hecho | `internal/appboot` (cableado compartido); `cmd/desktop/main.go` (tag `desktop`) usa `AssetServer.Handler = router` (SPA + /api por el mismo handler), `SingleInstanceLock`, `OnBeforeClose` oculta a bandeja, bandeja best-effort con `energye/systray` (Abrir/Salir). `cmd/desktop/wails.json`. Compila con `go build -tags desktop ./cmd/desktop`; `wails build` en la máquina destino. |
 | 8 — Migración de datos | ⏳ pendiente | |
 | 9 — Web / móvil | ⏳ pendiente | `cmd/server` ya es la base |
 
@@ -83,6 +83,26 @@ backend/tests/         # caracterización de la versión Python (Fase 0)
   build de Wails y CI) y da control total sobre la coerción de tipos dinámicos de
   SQLite (`FLOAT` puede volver como int64/float64/NULL). El objetivo del plan
   (SQL crudo, sin ORM, repos que devuelven dominio) se cumple igual.
+
+## Decisiones de la Fase 7
+
+- **`internal/appboot`**: cableado compartido (config → BD → migración → repos →
+  casos de uso → router). `cmd/server` y `cmd/desktop` solo cambian el envoltorio.
+- **`cmd/desktop` lleva la etiqueta de build `desktop`** (la que ponen `wails dev`
+  y `wails build`). Así `go build ./...`, `go vet` y el CI normal NO arrastran el
+  toolchain de Wails (CGO + WebKit). Comprobación de compilación aparte:
+  `make desktop-compile`.
+- **Wails sirve la app por `AssetServer.Handler`** = el mismo `chi` router
+  (SPA embebido + `/api`). No hay bindings Go↔JS. Migrar a web = compilar
+  `cmd/server`.
+- `SingleInstanceLock` (crítico por la BD única). Cerrar la ventana la **oculta**
+  (`OnBeforeClose` → `WindowHide`); se sale por "Salir" en la bandeja.
+- **Bandeja best-effort** con `energye/systray` en una goroutine, con `recover`:
+  si falla (típico en algunos SO), la app sigue — la ventana se oculta/reabre por
+  el SO. Target real: Windows.
+- `cmd/desktop/wails.json` con `frontend:dir: ../../frontend`; `wails build` se
+  ejecuta desde `cmd/desktop/`. Iconos en `cmd/desktop/build/`.
+- Deps nuevas: `wailsapp/wails/v2`, `energye/systray`.
 
 ## Decisiones de la Fase 6
 

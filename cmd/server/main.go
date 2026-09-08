@@ -1,8 +1,8 @@
 // Command server arranca la API de Control IPV como servidor HTTP independiente.
 //
 // Es la entrega usada para desarrollo del frontend y, más adelante, para el
-// despliegue web. El binario de escritorio (cmd/desktop, Fase 7) reutilizará
-// exactamente el mismo router e internals; aquí solo cambia el envoltorio.
+// despliegue web. El binario de escritorio (cmd/desktop) reutiliza el mismo
+// appboot; aquí solo cambia el envoltorio.
 package main
 
 import (
@@ -15,9 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Rob102194/control_ipv_tool/internal/adapters/sqlite"
-	"github.com/Rob102194/control_ipv_tool/internal/app/usecases"
-	"github.com/Rob102194/control_ipv_tool/internal/httpapi"
+	"github.com/Rob102194/control_ipv_tool/internal/appboot"
 	"github.com/Rob102194/control_ipv_tool/internal/platform"
 	"github.com/Rob102194/control_ipv_tool/web"
 )
@@ -34,55 +32,24 @@ func run() error {
 		println("config:", err.Error())
 		return err
 	}
-
 	logger := platform.SetupLogging(cfg.LogLevel, cfg.Env)
 
-	dataDir, err := platform.EnsureDataDir(cfg.DataDir)
+	app, err := appboot.New(cfg, logger, web.Handler())
 	if err != nil {
-		logger.Error("no se pudo preparar el directorio de datos", "err", err)
+		logger.Error("no se pudo iniciar la aplicación", "err", err)
 		return err
 	}
-	dbPath := platform.ResolveDBPath(dataDir, cfg.DBPath)
-
-	db, err := sqlite.Open(dbPath)
-	if err != nil {
-		logger.Error("no se pudo abrir la base de datos", "path", dbPath, "err", err)
-		return err
-	}
-	defer db.Close()
-
-	if err := sqlite.Migrate(db, logger); err != nil {
-		logger.Error("fallo al migrar la base de datos", "err", err)
-		return err
-	}
-
-	store := sqlite.NewStore(db)
-	services := usecases.New(usecases.Deps{
-		Repos: store,
-		UOW:   store,
-		Clock: platform.SystemClock{},
-		IDs:   platform.UUIDGen{},
-	})
-
-	router := httpapi.NewRouter(httpapi.Deps{
-		Logger:        logger,
-		DB:            db,
-		Services:      services,
-		CORSOrigins:   cfg.CORSOrigins,
-		SchemaVersion: func() (int64, error) { return sqlite.SchemaVersion(db) },
-		SPA:           web.Handler(),
-	})
+	defer app.Close()
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           router,
+		Handler:           app.Handler,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      60 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
-
-	return serve(srv, logger, dbPath)
+	return serve(srv, logger, app.DBPath)
 }
 
 // serve arranca el servidor y lo apaga con gracia ante SIGINT/SIGTERM.
