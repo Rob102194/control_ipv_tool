@@ -1,2 +1,0 @@
-# Marcador para que //go:embed all:dist compile sin un build previo.
-# vite (--emptyOutDir) borra esta carpeta; `make frontend` lo recrea.

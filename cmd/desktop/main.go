@@ -6,8 +6,10 @@
 // implica compilar cmd/server en vez de este binario.
 //
 // Compilar este paquete arrastra el toolchain de Wails (CGO + WebKit/GTK en
-// Linux). El CI instala esas librerías; en macOS y Windows no hacen falta
-// paquetes extra.
+// Linux). El CI instala esas dependencias; en macOS y Windows no hacen falta
+// paquetes extra. La bandeja del sistema (systray) solo se compila en Windows y
+// Linux; en macOS entra en conflicto con el runloop de Cocoa de Wails (ver
+// tray_noop.go).
 package main
 
 import (
@@ -15,7 +17,6 @@ import (
 	"log/slog"
 	"sync/atomic"
 
-	"github.com/energye/systray"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -60,11 +61,12 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			sh.ctx = ctx
 			logger.Info("escritorio listo", "db", app.DBPath)
-			go sh.runTray()
+			go startTray(sh)
 		},
 		OnBeforeClose: func(context.Context) (prevent bool) {
 			// Cerrar la ventana la oculta a la bandeja; se sale desde el menú
-			// de la bandeja ("Salir").
+			// de la bandeja ("Salir"). En macOS (sin bandeja) simplemente
+			// oculta la ventana; se puede reabrir desde el Dock.
 			if sh.quitting.Load() {
 				return false
 			}
@@ -72,7 +74,7 @@ func main() {
 			return true
 		},
 		OnShutdown: func(context.Context) {
-			systray.Quit()
+			stopTray()
 			_ = app.Close()
 		},
 	})
@@ -105,28 +107,4 @@ func (s *shell) quit() {
 	if s.ctx != nil {
 		wruntime.Quit(s.ctx)
 	}
-}
-
-// runTray monta el icono de la bandeja. Es best-effort: si falla, la app sigue
-// funcionando (cerrar la ventana la oculta, y se puede reabrir por el SO).
-func (s *shell) runTray() {
-	defer func() {
-		if r := recover(); r != nil {
-			s.logger.Warn("no se pudo iniciar la bandeja del sistema", "err", r)
-		}
-	}()
-	systray.Run(func() {
-		systray.SetTitle("Control IPV")
-		systray.SetTooltip("Control IPV")
-		if len(trayIcon) > 0 {
-			systray.SetIcon(trayIcon)
-		}
-		abrir := systray.AddMenuItem("Abrir", "Mostrar la ventana")
-		systray.AddSeparator()
-		salir := systray.AddMenuItem("Salir", "Cerrar Control IPV")
-
-		abrir.Click(func() { s.show() })
-		salir.Click(func() { s.quit() })
-		systray.SetOnClick(func(menu systray.IMenu) { s.show() })
-	}, nil)
 }

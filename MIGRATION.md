@@ -123,9 +123,10 @@ openapi.yaml           # contrato de la API
   `cmd/server`.
 - `SingleInstanceLock` (crítico por la BD única). Cerrar la ventana la **oculta**
   (`OnBeforeClose` → `WindowHide`); se sale por "Salir" en la bandeja.
-- **Bandeja best-effort** con `energye/systray` en una goroutine, con `recover`:
-  si falla (típico en algunos SO), la app sigue — la ventana se oculta/reabre por
-  el SO. Target real: Windows.
+- **Bandeja solo en Windows/Linux** (`tray_systray.go`, `//go:build windows ||
+  linux`). En macOS `energye/systray` toma el runloop de Cocoa que ya gestiona
+  Wails → error de enlazado; `tray_noop.go` la deja como no-op y cerrar la
+  ventana la oculta igual (reabrir desde el Dock). Target real: Windows.
 - `cmd/desktop/wails.json` con `frontend:dir: ../../frontend`; `wails build` se
   ejecuta desde `cmd/desktop/`. Iconos en `cmd/desktop/build/`.
 - Deps nuevas: `wailsapp/wails/v2`, `energye/systray`.
