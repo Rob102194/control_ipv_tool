@@ -36,13 +36,15 @@ dev-front: ## Arranca Vite con proxy /api -> :5175 (usar junto con `make dev`)
 	cd frontend && npm run dev
 
 # --- Escritorio (Wails). Requiere el CLI: go install github.com/wailsapp/wails/v2/cmd/wails@latest ---
+# Compilar cmd/desktop arrastra WebKit/GTK (Linux) vía CGO. En macOS/Windows no
+# hacen falta paquetes extra; el CI de Linux los instala.
 
 .PHONY: wails-dev
 wails-dev: ## Arranca la app de escritorio en modo desarrollo
 	cd cmd/desktop && wails dev
 
 .PHONY: wails-build
-wails-build: ## Compila el ejecutable de escritorio (dist en cmd/desktop/build/bin)
+wails-build: ## Compila el ejecutable de escritorio (en cmd/desktop/build/bin)
 	cd cmd/desktop && wails build -clean
 
 .PHONY: wails-doctor
@@ -51,7 +53,7 @@ wails-doctor: ## Verifica el entorno de Wails
 
 .PHONY: desktop-compile
 desktop-compile: ## Solo comprueba que cmd/desktop compila (sin empaquetar)
-	$(GO) build -tags desktop -o /dev/null ./cmd/desktop
+	$(GO) build -o /dev/null ./cmd/desktop
 
 .PHONY: test
 test: ## Ejecuta los tests

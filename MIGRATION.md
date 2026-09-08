@@ -17,7 +17,7 @@ elimina la versión Python") por si hiciera falta consultarla o regenerar golden
 | 4 — Casos de uso | ✅ hecho | `internal/app/usecases` — solo importa `core/domain` y `core/ports`. Servicios por agregado (Producto/Area/Receta/Venta/IPV/Historial). Escrituras multi-paso + historial dentro de `UOW.Do`. `ObtenerEstado`/`GenerarReporte` con dominio; el reporte devuelve datos estructurados (el texto lo arma la Fase 5). Importaciones (productos/recetas/ventas) con la lógica de Python. Tests contra los goldens y fixtures. |
 | 5 — Capa HTTP | ✅ hecho | `internal/httpapi` — DTOs (`dto.go`) con claves = `to_dict` de Python; 23 rutas montadas en `router.go` (con y sin barra final); handlers en `handlers.go`/`excel_handlers.go`; `validator` en los cuerpos struct; `statusFor` mapea `domain.ValidationError→422`, `ConflictError→409`, `NotFoundError→404`, `ErrNoEncontrado→404`. `cmd/server` cablea `Store`+`Services`. **Arnés de paridad** (`parity_test.go`): la API Go reproduce los 8 goldens (listados, consumo, estado, guardar, reporte) — comparación estructural con ids normalizados. |
 | 6 — Frontend | ✅ hecho | `client.js` → `/api` relativo (+ proxy Vite a `:5175` en dev); `useIPV.handleCalcularDiferencias` ahora llama a `POST /ipv/calcular` (fin del recálculo duplicado en el cliente); `react-beautiful-dnd` → `@hello-pangea/dnd`; `vite build` → `web/dist/`, embebido en Go (`web/embed.go`, `//go:embed`) y servido con fallback SPA. `cmd/server` sirve el SPA embebido. |
-| 7 — Shell Wails | ✅ hecho | `internal/appboot` (cableado compartido); `cmd/desktop/main.go` (tag `desktop`) usa `AssetServer.Handler = router` (SPA + /api por el mismo handler), `SingleInstanceLock`, `OnBeforeClose` oculta a bandeja, bandeja best-effort con `energye/systray` (Abrir/Salir). `cmd/desktop/wails.json`. Compila con `go build -tags desktop ./cmd/desktop`; `wails build` en la máquina destino. |
+| 7 — Shell Wails | ✅ hecho | `internal/appboot` (cableado compartido); `cmd/desktop/main.go` usa `AssetServer.Handler = router` (SPA + /api por el mismo handler), `SingleInstanceLock`, `OnBeforeClose` oculta a bandeja, bandeja best-effort con `energye/systray` (Abrir/Salir). `cmd/desktop/wails.json`. `go build ./...` lo compila (arrastra WebKit/GTK vía CGO; el CI de Linux instala las libs). `wails dev` / `wails build` desde `cmd/desktop/`. |
 | 8 — Migración de datos | ✅ hecho | Primer arranque: `platform.ImportLegacyIfNeeded` copia la `inventario.db` de la versión Python al datadir con `VACUUM INTO` (+ `.pre-go.bak`, `.imported-from.txt`, sin tocar el origen); `sqlite.Migrate` detecta la BD preexistente y **sella 00001 como baseline** sin recrear tablas. **Probado contra la BD real de producción** (229 productos, 16 892 ventas, 24 994 filas de IPV, 163 fechas): todos los endpoints responden. El esquema `00001` ahora incluye `grupos` y `recetas.grupo_id` (existen en producción; el código Go los preserva aunque no los use). |
 | 9 — Web / móvil | ✅ hecho | `cmd/server` y `cmd/desktop` comparten **el mismo** conjunto de `internal/` (verificado con `go list -deps`): la única diferencia es el envoltorio en `cmd/`. Añadido el *seam* `appboot.Options.AuthMiddleware` → `httpapi.Deps.AuthMiddleware` (envuelve `/api`; nil en escritorio). `docs/web-roadmap.md` detalla lo que falta (auth, `negocio_id`, adaptador Postgres, bloqueo optimista) — nada de ello toca `internal/core`. |
 
@@ -112,10 +112,12 @@ openapi.yaml           # contrato de la API
 
 - **`internal/appboot`**: cableado compartido (config → BD → migración → repos →
   casos de uso → router). `cmd/server` y `cmd/desktop` solo cambian el envoltorio.
-- **`cmd/desktop` lleva la etiqueta de build `desktop`** (la que ponen `wails dev`
-  y `wails build`). Así `go build ./...`, `go vet` y el CI normal NO arrastran el
-  toolchain de Wails (CGO + WebKit). Comprobación de compilación aparte:
-  `make desktop-compile`.
+- **`cmd/desktop` sin etiqueta de build.** Se intentó `//go:build desktop` para
+  aislar Wails de `go build ./...` y del CI, pero el generador de bindings de
+  `wails dev`/`wails build` (v2.15) no propaga `-tags` a ese paso → "build
+  constraints exclude all Go files". Se quitó: `go build ./...` compila también
+  `cmd/desktop` (CGO + WebKit en macOS/Windows sin extras; el CI de Linux instala
+  `libgtk-3-dev` y `libwebkit2gtk-4.1-dev`).
 - **Wails sirve la app por `AssetServer.Handler`** = el mismo `chi` router
   (SPA embebido + `/api`). No hay bindings Go↔JS. Migrar a web = compilar
   `cmd/server`.

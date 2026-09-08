@@ -1,5 +1,3 @@
-//go:build desktop
-
 // Command desktop es el ejecutable de escritorio (Wails v2).
 //
 // No lleva lógica de negocio: arma la aplicación con appboot (el mismo cableado
@@ -7,8 +5,9 @@
 // el frontend y la API viajan por el mismo http.Handler. Así, migrar a web solo
 // implica compilar cmd/server en vez de este binario.
 //
-// Se compila con la etiqueta `desktop` (la que ponen `wails dev` y `wails build`),
-// para que `go build ./...` y el CI normal no arrastren el toolchain de Wails.
+// Compilar este paquete arrastra el toolchain de Wails (CGO + WebKit/GTK en
+// Linux). El CI instala esas librerías; en macOS y Windows no hacen falta
+// paquetes extra.
 package main
 
 import (
