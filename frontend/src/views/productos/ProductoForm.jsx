@@ -22,7 +22,7 @@ const ProductoForm = ({ onProductoCreado }) => {
   // Estado para el producto, carga, guardado y errores
   const [producto, setProducto] = useState({
     nombre: '',
-    unidad_medida: 'unidades'
+    unidad_medida: unidadesMedida[0]
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
