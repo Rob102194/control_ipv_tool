@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Rob102194/control_ipv_tool/internal/core/domain"
+	"github.com/Rob102194/control_ipv_tool/internal/core/ports"
 )
 
 // GenerarReporte construye los datos estructurados del reporte de IPV de una
@@ -27,7 +28,7 @@ func (s *IPVService) GenerarReporte(ctx context.Context, fecha domain.Date) (Rep
 	if err != nil {
 		return ReporteIPV{}, err
 	}
-	productos, err := s.Repos.Productos().Listar(ctx, 0)
+	productos, err := s.Repos.Productos().Listar(ctx, ports.OrdenProductoNombre)
 	if err != nil {
 		return ReporteIPV{}, err
 	}

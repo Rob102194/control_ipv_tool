@@ -56,11 +56,14 @@ const AreaList = () => {
     );
   }
 
-  // Muestra un mensaje de error si ocurre un problema
-  if (error) {
+  // Muestra un mensaje de error a pantalla completa solo si no hay nada que mostrar.
+  if (error && areas.length === 0) {
     return (
       <Container className="mt-5">
-        <Alert variant="danger">{error}</Alert>
+        <Alert variant="danger">
+          {error}{' '}
+          <Button variant="link" className="p-0 align-baseline" onClick={cargarAreas}>Reintentar</Button>
+        </Alert>
       </Container>
     );
   }
@@ -74,6 +77,8 @@ const AreaList = () => {
           Nueva Área
         </Link>
       </div>
+
+      {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
 
       <Table striped bordered hover responsive>
         <thead>

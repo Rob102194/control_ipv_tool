@@ -14,7 +14,8 @@ const ModeloIPV = () => {
     const [selectedArea, setSelectedArea] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
+    const [loadError, setLoadError] = useState('');
+    const [saveError, setSaveError] = useState('');
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -37,7 +38,8 @@ const ModeloIPV = () => {
                 }
                 setModelos(modelosConOrden);
             } catch (err) {
-                setError('Error al cargar los datos iniciales.');
+                console.error(err);
+                setLoadError('Error al cargar los datos iniciales.');
             } finally {
                 setLoading(false);
             }
@@ -84,6 +86,7 @@ const ModeloIPV = () => {
     const handleSaveChanges = async () => {
         if (!selectedArea) return;
         setSaving(true);
+        setSaveError('');
         try {
             await ipvApi.guardarModelo({
                 area_id: selectedArea.id,
@@ -91,14 +94,15 @@ const ModeloIPV = () => {
             });
             alert('¡Modelo guardado con éxito!');
         } catch (err) {
-            setError('Error al guardar el modelo.');
+            console.error(err);
+            setSaveError('Error al guardar el modelo.');
         } finally {
             setSaving(false);
         }
     };
 
     if (loading && !areas.length) return <Spinner animation="border" />;
-    if (error) return <Alert variant="danger">{error}</Alert>;
+    if (loadError) return <Alert variant="danger">{loadError}</Alert>;
 
     const getProductoNombre = (productoId) => {
         const producto = productos.find(p => p.id === productoId);
@@ -128,6 +132,7 @@ const ModeloIPV = () => {
                     {selectedArea ? (
                         <div>
                             <h4>Productos para {selectedArea.nombre}</h4>
+                            {saveError && <Alert variant="danger" onClose={() => setSaveError('')} dismissible>{saveError}</Alert>}
                             <Form.Group>
                                 <Typeahead
                                     id="producto-typeahead"

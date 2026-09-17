@@ -44,11 +44,14 @@ func (a *api) productosExport(w http.ResponseWriter, r *http.Request) {
 	for i, p := range ps {
 		rows[i] = excel.ProductoRow{Nombre: p.Nombre, UnidadMedida: p.UnidadMedida}
 	}
+	var buf bytes.Buffer
+	if err := excel.WriteProductos(&buf, rows); err != nil {
+		a.fail(w, r, err)
+		return
+	}
 	w.Header().Set("Content-Type", xlsxMIME)
 	w.Header().Set("Content-Disposition", `attachment; filename="productos.xlsx"`)
-	if err := excel.WriteProductos(w, rows); err != nil {
-		a.logger.Error("exportando productos", "err", err)
-	}
+	w.Write(buf.Bytes())
 }
 
 func (a *api) productosImport(w http.ResponseWriter, r *http.Request) {
@@ -124,11 +127,14 @@ func (a *api) recetasExport(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
+	var buf bytes.Buffer
+	if err := excel.WriteRecetas(&buf, rows); err != nil {
+		a.fail(w, r, err)
+		return
+	}
 	w.Header().Set("Content-Type", xlsxMIME)
 	w.Header().Set("Content-Disposition", `attachment; filename="recetas.xlsx"`)
-	if err := excel.WriteRecetas(w, rows); err != nil {
-		a.logger.Error("exportando recetas", "err", err)
-	}
+	w.Write(buf.Bytes())
 }
 
 func (a *api) recetasImport(w http.ResponseWriter, r *http.Request) {

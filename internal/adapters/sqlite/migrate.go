@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"fmt"
@@ -18,7 +19,7 @@ const migrationsDir = "migrations"
 // Es idempotente: si la BD ya está al día no hace nada. Si detecta una BD
 // preexistente de la versión Python (tiene las tablas pero no la de goose),
 // sella la migración inicial como aplicada en vez de intentar recrearla.
-func Migrate(db *sql.DB, logger *slog.Logger) error {
+func Migrate(ctx context.Context, db *sql.DB, logger *slog.Logger) error {
 	goose.SetBaseFS(migrationsFS)
 	goose.SetLogger(gooseSlog{logger})
 
@@ -26,7 +27,7 @@ func Migrate(db *sql.DB, logger *slog.Logger) error {
 		return fmt.Errorf("configurando dialecto goose: %w", err)
 	}
 
-	if err := baselineIfLegacy(db, logger); err != nil {
+	if err := baselineIfLegacy(ctx, db, logger); err != nil {
 		return fmt.Errorf("sellando BD preexistente: %w", err)
 	}
 
@@ -57,26 +58,26 @@ func SchemaVersion(db *sql.DB) (int64, error) {
 // baselineIfLegacy sella la migración 00001 como aplicada cuando la BD ya trae
 // el esquema (viene de la versión Python) pero aún no la tabla de control de
 // goose. Así no se intenta recrear tablas que ya existen y no se pierde nada.
-func baselineIfLegacy(db *sql.DB, logger *slog.Logger) error {
-	if tableExists(db, "goose_db_version") {
+func baselineIfLegacy(ctx context.Context, db *sql.DB, logger *slog.Logger) error {
+	if tableExists(ctx, db, "goose_db_version") {
 		return nil // ya la gestiona goose
 	}
-	if !tableExists(db, "productos") {
+	if !tableExists(ctx, db, "productos") {
 		return nil // BD nueva: goose.Up ejecutará 00001 con normalidad
 	}
 	logger.Info("BD preexistente detectada (esquema Python); sellando 00001 como baseline")
 	if _, err := goose.EnsureDBVersion(db); err != nil {
 		return err
 	}
-	_, err := db.Exec(
+	_, err := db.ExecContext(ctx,
 		`INSERT INTO goose_db_version (version_id, is_applied, tstamp) VALUES (1, 1, CURRENT_TIMESTAMP)`,
 	)
 	return err
 }
 
-func tableExists(db *sql.DB, name string) bool {
+func tableExists(ctx context.Context, db *sql.DB, name string) bool {
 	var n string
-	err := db.QueryRow(
+	err := db.QueryRowContext(ctx,
 		`SELECT name FROM sqlite_master WHERE type='table' AND name = ?`, name,
 	).Scan(&n)
 	return err == nil

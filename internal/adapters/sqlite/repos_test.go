@@ -19,7 +19,7 @@ func newTestStore(t *testing.T) *Store {
 		t.Fatalf("Open: %v", err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	if err := Migrate(db, newTestLogger()); err != nil {
+	if err := Migrate(context.Background(), db, newTestLogger()); err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
 	return NewStore(db)

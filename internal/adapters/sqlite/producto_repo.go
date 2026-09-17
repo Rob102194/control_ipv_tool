@@ -127,7 +127,7 @@ func (r *productoRepo) Eliminar(ctx context.Context, id string) error {
 func (r *productoRepo) EnUso(ctx context.Context, id string) (bool, error) {
 	var enUso bool
 	if err := r.q.QueryRowContext(ctx, sqlProductoEnUso, id, id, id, id).Scan(&enUso); err != nil {
-		return false, err
+		return false, mapErr(err)
 	}
 	return enUso, nil
 }

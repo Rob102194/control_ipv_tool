@@ -163,7 +163,7 @@ func parityServer(t *testing.T) *httptest.Server {
 		t.Fatalf("Open: %v", err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	if err := sqlite.Migrate(db, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
+	if err := sqlite.Migrate(context.Background(), db, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
 	st := sqlite.NewStore(db)

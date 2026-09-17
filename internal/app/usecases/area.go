@@ -32,13 +32,20 @@ func (s *AreaService) Crear(ctx context.Context, in AreaInput) (domain.Area, err
 	if err := a.Validar(); err != nil {
 		return domain.Area{}, err
 	}
-	if _, err := s.Repos.Areas().BuscarPorNombre(ctx, a.Nombre); err == nil {
-		return domain.Area{}, domain.Conflictf("El área con el nombre '%s' ya existe.", a.Nombre)
-	} else if !errors.Is(err, ports.ErrNoEncontrado) {
-		return domain.Area{}, err
-	}
-	a.ID = s.IDs.New()
-	return s.Repos.Areas().Crear(ctx, a)
+
+	var creada domain.Area
+	err := s.UOW.Do(ctx, func(r ports.Repos) error {
+		if _, err := r.Areas().BuscarPorNombre(ctx, a.Nombre); err == nil {
+			return domain.Conflictf("El área con el nombre '%s' ya existe.", a.Nombre)
+		} else if !errors.Is(err, ports.ErrNoEncontrado) {
+			return err
+		}
+		a.ID = s.IDs.New()
+		var err error
+		creada, err = r.Areas().Crear(ctx, a)
+		return err
+	})
+	return creada, err
 }
 
 func (s *AreaService) Actualizar(ctx context.Context, id string, in AreaInput) (domain.Area, error) {
@@ -51,5 +58,14 @@ func (s *AreaService) Actualizar(ctx context.Context, id string, in AreaInput) (
 }
 
 func (s *AreaService) Eliminar(ctx context.Context, id string) error {
-	return s.Repos.Areas().Eliminar(ctx, id)
+	return s.UOW.Do(ctx, func(r ports.Repos) error {
+		enUso, err := r.Areas().EnUso(ctx, id)
+		if err != nil {
+			return err
+		}
+		if enUso {
+			return domain.Conflictf("El área no se puede eliminar porque está siendo utilizada en una o más recetas, inventarios o modelos.")
+		}
+		return r.Areas().Eliminar(ctx, id)
+	})
 }

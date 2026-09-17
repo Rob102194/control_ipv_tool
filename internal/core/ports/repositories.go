@@ -57,6 +57,9 @@ type AreaRepository interface {
 	Listar(ctx context.Context) ([]domain.Area, error)
 	Actualizar(ctx context.Context, a domain.Area) (domain.Area, error)
 	Eliminar(ctx context.Context, id string) error
+	// EnUso indica si el área está referenciada por ingredientes, movimientos,
+	// inventario_diario o modelo_ipv.
+	EnUso(ctx context.Context, id string) (bool, error)
 }
 
 // RecetaRepository persiste recetas con sus ingredientes.

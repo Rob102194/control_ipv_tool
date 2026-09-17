@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ipvApi from '../api/ipvApi';
 import { obtenerProductos } from '../api/productoApi';
+import { formatDateLocal } from '../utils/date';
 
 export const useIPV = () => {
     const [fecha, setFecha] = useState('');
@@ -34,7 +35,7 @@ export const useIPV = () => {
         const fechaParts = fechaACargar.split('-');
         const fechaObj = new Date(fechaParts[0], fechaParts[1] - 1, fechaParts[2]);
         fechaObj.setDate(fechaObj.getDate() - 1);
-        const fechaAnteriorString = fechaObj.toISOString().split('T')[0];
+        const fechaAnteriorString = formatDateLocal(fechaObj);
 
         try {
             const [response, responseAnterior] = await Promise.all([
@@ -178,29 +179,25 @@ export const useIPV = () => {
 
     const handleItemChange = useCallback((areaNombre, productoId, field, value) => {
         setInventario(prevInventario => {
-            const nuevoInventario = JSON.parse(JSON.stringify(prevInventario));
-            const area = nuevoInventario[areaNombre];
-            const itemIndex = area.findIndex(item => item.producto_id === productoId);
-            if (itemIndex > -1) {
-                const numericValue = Math.max(0, parseFloat(value) || 0);
-                area[itemIndex][field] = numericValue;
-            }
-            return nuevoInventario;
+            const area = prevInventario[areaNombre];
+            const itemIndex = area ? area.findIndex(item => item.producto_id === productoId) : -1;
+            if (itemIndex === -1) return prevInventario;
+            const numericValue = Math.max(0, parseFloat(value) || 0);
+            const nuevaArea = [...area];
+            nuevaArea[itemIndex] = { ...nuevaArea[itemIndex], [field]: numericValue };
+            return { ...prevInventario, [areaNombre]: nuevaArea };
         });
     }, []);
 
     const handleCommentChange = useCallback((areaNombre, productoId, field, comment) => {
         setInventario(prevInventario => {
-            const nuevoInventario = JSON.parse(JSON.stringify(prevInventario));
-            const area = nuevoInventario[areaNombre];
-            const itemIndex = area.findIndex(item => item.producto_id === productoId);
-            if (itemIndex > -1) {
-                if (!area[itemIndex].comentarios) {
-                    area[itemIndex].comentarios = {};
-                }
-                area[itemIndex].comentarios[field] = comment;
-            }
-            return nuevoInventario;
+            const area = prevInventario[areaNombre];
+            const itemIndex = area ? area.findIndex(item => item.producto_id === productoId) : -1;
+            if (itemIndex === -1) return prevInventario;
+            const nuevaArea = [...area];
+            const item = nuevaArea[itemIndex];
+            nuevaArea[itemIndex] = { ...item, comentarios: { ...item.comentarios, [field]: comment } };
+            return { ...prevInventario, [areaNombre]: nuevaArea };
         });
     }, []);
 

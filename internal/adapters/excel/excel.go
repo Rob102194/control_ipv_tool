@@ -109,10 +109,10 @@ func ParseVentas(r io.Reader) ([]VentaRow, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !table.hasColumn("Nombre") || !table.hasColumn("Cantidad") {
+	idx, err := table.requireColumns("Nombre", "Cantidad")
+	if err != nil {
 		return nil, fmt.Errorf("el archivo debe contener las columnas 'Nombre' y 'Cantidad'")
 	}
-	idx, _ := table.requireColumns("Nombre", "Cantidad")
 
 	var out []VentaRow
 	for i, row := range table.data {
@@ -204,15 +204,6 @@ func readSheet(r io.Reader) (sheetTable, error) {
 		header[i] = strings.TrimSpace(h)
 	}
 	return sheetTable{header: header, data: rows[1:]}, nil
-}
-
-func (t sheetTable) hasColumn(name string) bool {
-	for _, h := range t.header {
-		if h == name {
-			return true
-		}
-	}
-	return false
 }
 
 func (t sheetTable) requireColumns(names ...string) (map[string]int, error) {

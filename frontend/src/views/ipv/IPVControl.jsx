@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Button, Container, Row, Col, Modal, Spinner } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Modal, Spinner, Alert } from 'react-bootstrap';
 import { useIPV } from '../../hooks/useIPV';
 import ModeloIPV from './ModeloIPV';
 import IPVRegistrosList from './IPVRegistrosList';
@@ -68,6 +68,10 @@ function IPVControl() {
             <Button variant="outline-primary" onClick={() => setShowRegistrosListModal(true)}>
                 Consultar Registros
             </Button>
+
+            {error && !showRegistroModal && (
+                <Alert variant="danger" className="mt-3">{error}</Alert>
+            )}
 
             <RegistroDiarioModal
                 show={showRegistroModal}

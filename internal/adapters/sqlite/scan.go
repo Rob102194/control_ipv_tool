@@ -3,8 +3,10 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
-	"strings"
 	"time"
+
+	driversqlite "modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 
 	"github.com/Rob102194/control_ipv_tool/internal/core/domain"
 	"github.com/Rob102194/control_ipv_tool/internal/core/ports"
@@ -32,10 +34,20 @@ func mapErr(err error) error {
 	return err
 }
 
-// isUniqueViolation detecta el error de restricción UNIQUE de modernc.org/sqlite
-// sin acoplarse a su tipo concreto: su mensaje contiene "UNIQUE constraint failed".
+// isUniqueViolation detecta la violación de UNIQUE (o de una clave primaria
+// declarada aparte, que SQLite reporta igual) por el código de error tipado
+// del driver, no por el texto del mensaje.
 func isUniqueViolation(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed")
+	var sqliteErr *driversqlite.Error
+	if !errors.As(err, &sqliteErr) {
+		return false
+	}
+	switch sqliteErr.Code() {
+	case sqlite3.SQLITE_CONSTRAINT_UNIQUE, sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
+		return true
+	default:
+		return false
+	}
 }
 
 // --- conversión de valores ------------------------------------------------

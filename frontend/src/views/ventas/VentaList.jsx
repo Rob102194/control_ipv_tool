@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Container, Alert, Spinner, Form, Row, Col } from 'react-bootstrap';
 import { getVentas, updateVenta, deleteVenta, importVentas, deleteVentas } from '../../api/ventaApi';
+import { formatDateLocal } from '../../utils/date';
 
 // Componente principal para la gestión de ventas.
 const VentaList = () => {
@@ -91,28 +92,31 @@ const ConsultarVentas = () => {
     const [ventasOriginales, setVentasOriginales] = useState([]);
     const [ventas, setVentas] = useState([]);
     const [filtroNombre, setFiltroNombre] = useState('');
-    const [fechaConsulta, setFechaConsulta] = useState(new Date().toISOString().split('T')[0]);
+    const [fechaConsulta, setFechaConsulta] = useState(formatDateLocal(new Date()));
     const [editingId, setEditingId] = useState(null);
     const [editedData, setEditedData] = useState({});
     const [selectedIds, setSelectedIds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Carga las ventas al montar el componente.
+    // Carga las ventas al montar el componente (y permite reintentar tras un error).
+    const [reloadToken, setReloadToken] = useState(0);
     useEffect(() => {
         const fetchVentas = async () => {
             setLoading(true);
+            setError('');
             try {
                 const response = await getVentas();
                 setVentasOriginales(response.data);
             } catch (err) {
+                console.error(err);
                 setError('Error al cargar las ventas');
             } finally {
                 setLoading(false);
             }
         };
         fetchVentas();
-    }, []);
+    }, [reloadToken]);
 
     // Filtra las ventas por fecha y nombre de receta.
     useEffect(() => {
@@ -140,6 +144,7 @@ const ConsultarVentas = () => {
             setVentasOriginales(updatedVentas);
             setVentas(updatedVentas.filter(v => v.fecha === fechaConsulta));
         } catch (err) {
+            console.error(err);
             setError('Error al actualizar la venta');
         }
     };
@@ -162,6 +167,7 @@ const ConsultarVentas = () => {
                 setVentasOriginales(updatedVentas);
                 setVentas(updatedVentas.filter(v => v.fecha === fechaConsulta));
             } catch (err) {
+                console.error(err);
                 setError('Error al eliminar la venta');
             }
         }
@@ -191,17 +197,28 @@ const ConsultarVentas = () => {
                 setVentas(updatedVentas.filter(v => v.fecha === fechaConsulta));
                 setSelectedIds([]);
             } catch (err) {
+                console.error(err);
                 setError('Error al eliminar las ventas seleccionadas');
             }
         }
     };
 
     if (loading) return <Spinner animation="border" />;
-    if (error) return <Alert variant="danger">{error}</Alert>;
+    if (error && ventasOriginales.length === 0) {
+        return (
+            <Alert variant="danger">
+                {error}{' '}
+                <Button variant="link" className="p-0 align-baseline" onClick={() => setReloadToken(t => t + 1)}>
+                    Reintentar
+                </Button>
+            </Alert>
+        );
+    }
 
     return (
         <div>
             <h2>Consultar Ventas</h2>
+            {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
             <Row className="mb-3">
                 <Col md={4}>
                     <Form.Group>
@@ -232,8 +249,9 @@ const ConsultarVentas = () => {
                 <thead>
                     <tr>
                         <th>
-                            <Form.Check 
+                            <Form.Check
                                 type="checkbox"
+                                aria-label="Seleccionar todas las ventas"
                                 onChange={handleSelectAll}
                                 checked={selectedIds.length === ventas.length && ventas.length > 0}
                             />
@@ -251,8 +269,9 @@ const ConsultarVentas = () => {
                         ventas.map(venta => (
                             <tr key={venta.id}>
                                 <td>
-                                    <Form.Check 
+                                    <Form.Check
                                         type="checkbox"
+                                        aria-label={`Seleccionar venta de ${venta.receta_nombre} del ${venta.fecha}`}
                                         checked={selectedIds.includes(venta.id)}
                                         onChange={() => handleSelect(venta.id)}
                                     />

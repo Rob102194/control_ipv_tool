@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -14,6 +15,10 @@ import (
 	"github.com/Rob102194/control_ipv_tool/internal/core/domain"
 	"github.com/Rob102194/control_ipv_tool/internal/core/ports"
 )
+
+// maxBodyBytes limita el tamaño del cuerpo de las peticiones JSON (los
+// archivos de import viajan en Base64 dentro del JSON, ver excel_handlers.go).
+const maxBodyBytes = 8 << 20
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
@@ -33,8 +38,15 @@ func respondJSON(w http.ResponseWriter, status int, v any) {
 
 // decode lee el cuerpo JSON en dst y valida sus etiquetas `validate`.
 func (a *api) decode(w http.ResponseWriter, r *http.Request, dst any) bool {
-	body, err := io.ReadAll(io.LimitReader(r.Body, 8<<20))
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
 	if err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			writeJSON(w, http.StatusRequestEntityTooLarge, map[string]string{
+				"error": "el cuerpo de la solicitud supera el tamaño máximo permitido",
+			})
+			return false
+		}
 		a.fail(w, r, domain.Invalid("body", "no se pudo leer el cuerpo de la solicitud"))
 		return false
 	}

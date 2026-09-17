@@ -46,6 +46,7 @@ function AreaIPVTab({ areaData, onItemChange, onCommentChange }) {
                         <td style={{ textAlign: 'left' }}>{item.producto_nombre || 'Producto no encontrado'}</td>
                         <td>
                             <EditableCell
+                                label={`Inicio de ${item.producto_nombre}`}
                                 value={item.inicio}
                                 onChange={(value) => onItemChange(item.producto_id, 'inicio', value)}
                                 onCommentChange={(comment) => onCommentChange(item.producto_id, 'inicio', comment)}
@@ -54,6 +55,7 @@ function AreaIPVTab({ areaData, onItemChange, onCommentChange }) {
                         </td>
                         <td>
                             <EditableCell
+                                label={`Entradas de ${item.producto_nombre}`}
                                 value={item.entradas}
                                 onChange={(value) => onItemChange(item.producto_id, 'entradas', value)}
                                 onCommentChange={(comment) => onCommentChange(item.producto_id, 'entradas', comment)}
@@ -63,6 +65,7 @@ function AreaIPVTab({ areaData, onItemChange, onCommentChange }) {
                         <td>{(item.consumo || 0).toFixed(3)}</td>
                         <td>
                             <EditableCell
+                                label={`Merma de ${item.producto_nombre}`}
                                 value={item.merma}
                                 onChange={(value) => onItemChange(item.producto_id, 'merma', value)}
                                 onCommentChange={(comment) => onCommentChange(item.producto_id, 'merma', comment)}
@@ -71,6 +74,7 @@ function AreaIPVTab({ areaData, onItemChange, onCommentChange }) {
                         </td>
                         <td>
                             <EditableCell
+                                label={`Otras salidas de ${item.producto_nombre}`}
                                 value={item.otras_salidas}
                                 onChange={(value) => onItemChange(item.producto_id, 'otras_salidas', value)}
                                 onCommentChange={(comment) => onCommentChange(item.producto_id, 'otras_salidas', comment)}
@@ -79,6 +83,7 @@ function AreaIPVTab({ areaData, onItemChange, onCommentChange }) {
                         </td>
                         <td>
                             <EditableCell
+                                label={`Final físico de ${item.producto_nombre}`}
                                 value={item.final_fisico}
                                 onChange={(value) => onItemChange(item.producto_id, 'final_fisico', value)}
                                 onCommentChange={(comment) => onCommentChange(item.producto_id, 'final_fisico', comment)}

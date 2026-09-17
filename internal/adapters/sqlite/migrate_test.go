@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"path/filepath"
@@ -20,12 +21,12 @@ func TestMigrateCreatesSchema(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	if err := Migrate(db, newTestLogger()); err != nil {
+	if err := Migrate(context.Background(), db, newTestLogger()); err != nil {
 		t.Fatalf("Migrate: %v", err)
 	}
 
 	// Idempotencia: una segunda pasada no debe fallar.
-	if err := Migrate(db, newTestLogger()); err != nil {
+	if err := Migrate(context.Background(), db, newTestLogger()); err != nil {
 		t.Fatalf("Migrate (2ª vez): %v", err)
 	}
 

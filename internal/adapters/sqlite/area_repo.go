@@ -19,6 +19,11 @@ const (
 	sqlAreaList   = `SELECT ` + sqlAreaCols + ` FROM areas ORDER BY rowid`
 	sqlAreaUpdate = `UPDATE areas SET nombre = ?, codigo = ? WHERE id = ?`
 	sqlAreaDelete = `DELETE FROM areas WHERE id = ?`
+	sqlAreaEnUso  = `SELECT
+		EXISTS(SELECT 1 FROM ingredientes      WHERE area_id = ?) OR
+		EXISTS(SELECT 1 FROM movimientos       WHERE area_id = ?) OR
+		EXISTS(SELECT 1 FROM inventario_diario WHERE area_id = ?) OR
+		EXISTS(SELECT 1 FROM modelo_ipv        WHERE area_id = ?)`
 )
 
 func scanArea(s interface{ Scan(...any) error }) (domain.Area, error) {
@@ -88,4 +93,12 @@ func (r *areaRepo) Eliminar(ctx context.Context, id string) error {
 		return ports.ErrNoEncontrado
 	}
 	return nil
+}
+
+func (r *areaRepo) EnUso(ctx context.Context, id string) (bool, error) {
+	var enUso bool
+	if err := r.q.QueryRowContext(ctx, sqlAreaEnUso, id, id, id, id).Scan(&enUso); err != nil {
+		return false, mapErr(err)
+	}
+	return enUso, nil
 }

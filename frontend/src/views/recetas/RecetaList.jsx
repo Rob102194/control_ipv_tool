@@ -83,11 +83,14 @@ const RecetaList = () => {
     );
   }
 
-  // Muestra un mensaje de error si falla la carga
-  if (error) {
+  // Muestra un mensaje de error a pantalla completa solo si no hay nada que mostrar.
+  if (error && recetas.length === 0) {
     return (
       <Container className="mt-5">
-        <Alert variant="danger">{error}</Alert>
+        <Alert variant="danger">
+          {error}{' '}
+          <Button variant="link" className="p-0 align-baseline" onClick={cargarRecetas}>Reintentar</Button>
+        </Alert>
       </Container>
     );
   }
@@ -180,6 +183,8 @@ const RecetaList = () => {
           </Link>
         </div>
       </div>
+
+      {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
 
       {/* Muestra el resultado de la importación */}
       {importResult && (

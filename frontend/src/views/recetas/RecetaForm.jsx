@@ -170,7 +170,7 @@ const RecetaForm = () => {
             <div className="mb-3">
               <Button
                 variant="outline-primary"
-                onClick={() => setFieldValue('ingredientes', [...values.ingredientes, { producto_id: '', area_id: '', cantidad: 1 }])}
+                onClick={() => setFieldValue('ingredientes', [...values.ingredientes, { id: crypto.randomUUID(), producto_id: '', area_id: '', cantidad: 1 }])}
               >
                 Agregar Ingrediente
               </Button>
@@ -200,7 +200,7 @@ const RecetaForm = () => {
               </thead>
               <tbody>
                 {values.ingredientes.map((ing, index) => (
-                  <tr key={index}>
+                  <tr key={ing.id ?? index}>
                     {/* Columna Producto con autocompletado */}
                     <td>
                       <Typeahead

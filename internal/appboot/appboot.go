@@ -6,6 +6,7 @@
 package appboot
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"net/http"
@@ -65,7 +66,7 @@ func NewWithOptions(cfg platform.Config, logger *slog.Logger, opts Options) (*Ap
 	if err != nil {
 		return nil, err
 	}
-	if err := sqlite.Migrate(db, logger); err != nil {
+	if err := sqlite.Migrate(context.Background(), db, logger); err != nil {
 		_ = db.Close()
 		return nil, err
 	}

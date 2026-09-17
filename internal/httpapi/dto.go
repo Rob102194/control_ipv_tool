@@ -249,7 +249,7 @@ type recetaInputDTO struct {
 		ProductoID string  `json:"producto_id" validate:"required"`
 		AreaID     string  `json:"area_id" validate:"required"`
 		Cantidad   float64 `json:"cantidad"`
-	} `json:"ingredientes"`
+	} `json:"ingredientes" validate:"dive"`
 }
 
 func (d recetaInputDTO) toUC() usecases.RecetaInput {
@@ -339,14 +339,12 @@ func viewsFromInput(ds []inventarioInputDTO) ([]usecases.InventarioFilaView, err
 // decodeArchivo en excel_handlers.go.
 type importArchivoDTO struct {
 	ArchivoBase64 string `json:"archivo_base64" validate:"required"`
-	NombreArchivo string `json:"nombre_archivo"`
 }
 
 // importVentasDTO es la entrada de /ventas/importar: igual que
 // importArchivoDTO, más la fecha opcional de las ventas importadas.
 type importVentasDTO struct {
 	ArchivoBase64 string `json:"archivo_base64" validate:"required"`
-	NombreArchivo string `json:"nombre_archivo"`
 	Fecha         string `json:"fecha"`
 }
 

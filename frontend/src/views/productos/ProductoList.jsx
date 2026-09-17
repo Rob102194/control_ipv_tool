@@ -113,11 +113,14 @@ const ProductoList = () => {
     );
   }
 
-  // Muestra un mensaje de error si ocurre un problema
-  if (error) {
+  // Muestra un mensaje de error a pantalla completa solo si no hay nada que mostrar.
+  if (error && productos.length === 0) {
     return (
       <Container className="mt-5">
-        <Alert variant="danger">{error}</Alert>
+        <Alert variant="danger">
+          {error}{' '}
+          <Button variant="link" className="p-0 align-baseline" onClick={cargarProductos}>Reintentar</Button>
+        </Alert>
       </Container>
     );
   }
@@ -154,6 +157,8 @@ const ProductoList = () => {
           </Link>
         </div>
       </div>
+
+      {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
 
       {/* Campo de búsqueda y ordenamiento */}
       <Form.Group className="mb-3 d-flex">

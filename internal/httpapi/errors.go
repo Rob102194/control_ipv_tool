@@ -13,61 +13,12 @@ import (
 	"github.com/Rob102194/control_ipv_tool/internal/core/ports"
 )
 
-// Kind clasifica un error de negocio para traducirlo a un código HTTP.
-type Kind int
-
-const (
-	KindInternal   Kind = iota // 500 — no se filtra el detalle al cliente
-	KindValidation             // 422 — entrada inválida
-	KindNotFound               // 404 — recurso inexistente
-	KindConflict               // 409 — viola una invariante (p. ej. nombre duplicado)
-)
-
-// Error es el error tipado que la capa de aplicación devuelve hacia HTTP.
-// En la Fase 5 los casos de uso devolverán estos valores; por ahora define el
-// contrato y el mapeo.
-type Error struct {
-	Kind    Kind
-	Message string // mensaje apto para mostrar al usuario
-	Err     error  // causa subyacente, solo para logs
-}
-
-func (e *Error) Error() string {
-	if e.Err != nil {
-		return e.Message + ": " + e.Err.Error()
-	}
-	return e.Message
-}
-
-func (e *Error) Unwrap() error { return e.Err }
-
-// Constructores.
-func Validation(msg string) *Error { return &Error{Kind: KindValidation, Message: msg} }
-func NotFound(msg string) *Error   { return &Error{Kind: KindNotFound, Message: msg} }
-func Conflict(msg string) *Error   { return &Error{Kind: KindConflict, Message: msg} }
-func Internal(err error) *Error {
-	return &Error{Kind: KindInternal, Message: "Error interno del servidor", Err: err}
-}
-
 // statusFor traduce un error a (código HTTP, mensaje para el cliente).
 //
-// Reconoce tanto los errores de esta capa (*Error) como los del dominio
-// (*domain.ValidationError -> 422, *domain.ConflictError -> 409,
-// *domain.NotFoundError -> 404) y el centinela ports.ErrNoEncontrado -> 404.
+// Reconoce los errores del dominio (*domain.ValidationError -> 422,
+// *domain.ConflictError -> 409, *domain.NotFoundError -> 404) y el centinela
+// ports.ErrNoEncontrado -> 404.
 func statusFor(err error) (int, string) {
-	var e *Error
-	if errors.As(err, &e) {
-		switch e.Kind {
-		case KindValidation:
-			return http.StatusUnprocessableEntity, e.Message
-		case KindNotFound:
-			return http.StatusNotFound, e.Message
-		case KindConflict:
-			return http.StatusConflict, e.Message
-		}
-		return http.StatusInternalServerError, "Error interno del servidor"
-	}
-
 	var ve *domain.ValidationError
 	if errors.As(err, &ve) {
 		return http.StatusUnprocessableEntity, ve.Msg
