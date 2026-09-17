@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"bytes"
+	"encoding/base64"
 	"net/http"
 	"strconv"
 
@@ -12,28 +14,22 @@ import (
 
 const xlsxMIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-// openUpload devuelve el fichero subido en el campo "file".
-func (a *api) openUpload(w http.ResponseWriter, r *http.Request) (multipartFile, bool) {
-	if err := r.ParseMultipartForm(16 << 20); err != nil {
-		a.fail(w, r, domain.Invalid("file", "no se pudo leer el formulario"))
-		return nil, false
-	}
-	f, hdr, err := r.FormFile("file")
+// decodeArchivo decodifica el campo archivo_base64 a los bytes crudos del
+// Excel.
+//
+// El archivo viaja en Base64 dentro del cuerpo JSON, no como
+// multipart/form-data: el webview de escritorio (Wails, WKWebView en macOS)
+// pierde el body de las peticiones POST con archivos binarios al pasar por el
+// esquema wails:// (bug conocido de WKWebView con WKURLSchemeHandler, ver
+// https://github.com/wailsapp/wails/issues/3037). Un JSON con el archivo en
+// Base64 sí llega bien, igual que el resto de peticiones de la app.
+func (a *api) decodeArchivo(w http.ResponseWriter, r *http.Request, archivoBase64 string) ([]byte, bool) {
+	data, err := base64.StdEncoding.DecodeString(archivoBase64)
 	if err != nil {
-		a.fail(w, r, domain.Invalid("file", "No se encontró el archivo"))
+		a.fail(w, r, domain.Invalid("archivo_base64", "el archivo no está codificado en base64 válido"))
 		return nil, false
 	}
-	if hdr.Filename == "" {
-		f.Close()
-		a.fail(w, r, domain.Invalid("file", "No se seleccionó ningún archivo"))
-		return nil, false
-	}
-	return f, true
-}
-
-type multipartFile interface {
-	Read([]byte) (int, error)
-	Close() error
+	return data, true
 }
 
 // --- productos --------------------------------------------------------
@@ -56,14 +52,17 @@ func (a *api) productosExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *api) productosImport(w http.ResponseWriter, r *http.Request) {
-	f, ok := a.openUpload(w, r)
+	var in importArchivoDTO
+	if !a.decode(w, r, &in) {
+		return
+	}
+	data, ok := a.decodeArchivo(w, r, in.ArchivoBase64)
 	if !ok {
 		return
 	}
-	defer f.Close()
-	rows, err := excel.ParseProductos(f)
+	rows, err := excel.ParseProductos(bytes.NewReader(data))
 	if err != nil {
-		a.fail(w, r, domain.Invalid("file", err.Error()))
+		a.fail(w, r, domain.Invalid("archivo_base64", err.Error()))
 		return
 	}
 	items := make([]usecases.ImportProductoItem, len(rows))
@@ -133,14 +132,17 @@ func (a *api) recetasExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *api) recetasImport(w http.ResponseWriter, r *http.Request) {
-	f, ok := a.openUpload(w, r)
+	var in importArchivoDTO
+	if !a.decode(w, r, &in) {
+		return
+	}
+	data, ok := a.decodeArchivo(w, r, in.ArchivoBase64)
 	if !ok {
 		return
 	}
-	defer f.Close()
-	rows, err := excel.ParseRecetas(f)
+	rows, err := excel.ParseRecetas(bytes.NewReader(data))
 	if err != nil {
-		a.fail(w, r, domain.Invalid("file", err.Error()))
+		a.fail(w, r, domain.Invalid("archivo_base64", err.Error()))
 		return
 	}
 	items := make([]usecases.ImportRecetaItem, len(rows))
@@ -160,15 +162,17 @@ func (a *api) recetasImport(w http.ResponseWriter, r *http.Request) {
 // --- ventas --------------------------------------------------------
 
 func (a *api) ventasImportar(w http.ResponseWriter, r *http.Request) {
-	f, ok := a.openUpload(w, r)
+	var in importVentasDTO
+	if !a.decode(w, r, &in) {
+		return
+	}
+	data, ok := a.decodeArchivo(w, r, in.ArchivoBase64)
 	if !ok {
 		return
 	}
-	defer f.Close()
-
-	rows, err := excel.ParseVentas(f)
+	rows, err := excel.ParseVentas(bytes.NewReader(data))
 	if err != nil {
-		a.fail(w, r, domain.Invalid("file", err.Error()))
+		a.fail(w, r, domain.Invalid("archivo_base64", err.Error()))
 		return
 	}
 	items := make([]usecases.ImportVentaItem, len(rows))
@@ -180,8 +184,8 @@ func (a *api) ventasImportar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fecha *domain.Date
-	if s := r.FormValue("fecha"); s != "" {
-		d, err := domain.ParseDate(s)
+	if in.Fecha != "" {
+		d, err := domain.ParseDate(in.Fecha)
 		if err != nil {
 			a.fail(w, r, domain.Invalid("fecha", err.Error()))
 			return

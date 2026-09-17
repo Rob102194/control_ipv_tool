@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { fileToBase64 } from './base64';
 
 /**
  * Envía una solicitud para crear un nuevo producto.
@@ -45,11 +46,10 @@ export const exportarProductos = () => apiClient.get('productos/export/', {
 
 /**
  * Importa productos desde un archivo Excel.
- * @param {FormData} formData - El objeto FormData que contiene el archivo.
+ * @param {File} file - El archivo (.xlsx) a importar.
  * @returns {Promise} - La promesa de la respuesta de la API.
  */
-export const importarProductos = (formData) => apiClient.post('productos/import/', formData, {
-  headers: {
-    'Content-Type': 'multipart/form-data',
-  },
-});
+export const importarProductos = async (file) => {
+  const archivo_base64 = await fileToBase64(file);
+  return apiClient.post('productos/import/', { archivo_base64, nombre_archivo: file.name });
+};

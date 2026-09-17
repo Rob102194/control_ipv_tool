@@ -72,10 +72,8 @@ const ProductoList = () => {
   const handleImportar = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      const formData = new FormData();
-      formData.append('file', file);
       try {
-        await importarProductos(formData);
+        await importarProductos(file);
         cargarProductos(); // Recarga la lista después de importar
       } catch (err) {
         setError('Error al importar los productos');

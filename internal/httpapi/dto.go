@@ -334,6 +334,22 @@ func viewsFromInput(ds []inventarioInputDTO) ([]usecases.InventarioFilaView, err
 	return out, nil
 }
 
+// importArchivoDTO es la entrada de /productos/import y /recetas/import: el
+// archivo viaja en Base64 dentro del JSON (no como multipart/form-data), ver
+// decodeArchivo en excel_handlers.go.
+type importArchivoDTO struct {
+	ArchivoBase64 string `json:"archivo_base64" validate:"required"`
+	NombreArchivo string `json:"nombre_archivo"`
+}
+
+// importVentasDTO es la entrada de /ventas/importar: igual que
+// importArchivoDTO, más la fecha opcional de las ventas importadas.
+type importVentasDTO struct {
+	ArchivoBase64 string `json:"archivo_base64" validate:"required"`
+	NombreArchivo string `json:"nombre_archivo"`
+	Fecha         string `json:"fecha"`
+}
+
 // modelo IPV
 type modeloInputDTO struct {
 	AreaID    string `json:"area_id" validate:"required"`

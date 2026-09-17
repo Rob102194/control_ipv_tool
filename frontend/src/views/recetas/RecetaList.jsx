@@ -183,8 +183,8 @@ const RecetaList = () => {
 
       {/* Muestra el resultado de la importación */}
       {importResult && (
-        <Alert variant="info" onClose={() => setImportResult(null)} dismissible>
-          Importación completada: {importResult.importadas} recetas importadas, {importResult.omitidas} omitidas.
+        <Alert variant="success" onClose={() => setImportResult(null)} dismissible>
+          {importResult.message}
         </Alert>
       )}
 

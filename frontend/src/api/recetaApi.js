@@ -1,5 +1,6 @@
 // Importa el cliente de API configurado (axios)
 import apiClient from './client';
+import { fileToBase64 } from './base64';
 
 // Define un objeto que encapsula todas las llamadas a la API relacionadas con las recetas
 const recetaApi = {
@@ -43,14 +44,9 @@ const recetaApi = {
    * @param {File} file - El archivo (.xlsx) a importar.
    * @returns {Promise} - La promesa de la respuesta de la API.
    */
-  importar: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return apiClient.post('recetas/import/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  importar: async (file) => {
+    const archivo_base64 = await fileToBase64(file);
+    return apiClient.post('recetas/import/', { archivo_base64, nombre_archivo: file.name });
   },
 
   /**

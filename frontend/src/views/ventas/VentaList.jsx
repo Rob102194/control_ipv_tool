@@ -26,6 +26,7 @@ const ImportarVentas = () => {
     const [fecha, setFecha] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [resultado, setResultado] = useState(null);
 
     // Maneja la importación del archivo de ventas.
     const handleImport = async () => {
@@ -35,9 +36,10 @@ const ImportarVentas = () => {
         }
         setLoading(true);
         setError('');
+        setResultado(null);
         try {
-            await importVentas(file, fecha);
-            alert('¡Ventas importadas con éxito!');
+            const response = await importVentas(file, fecha);
+            setResultado(response.data);
             setFile(null);
             setFecha('');
         } catch (err) {
@@ -52,6 +54,17 @@ const ImportarVentas = () => {
         <div>
             <h2>Importar Ventas desde Excel</h2>
             {error && <Alert variant="danger">{error}</Alert>}
+            {resultado && (
+                <Alert variant="success" onClose={() => setResultado(null)} dismissible>
+                    <div>{resultado.message}</div>
+                    {resultado.nuevas_recetas?.length > 0 && (
+                        <div className="mt-2">
+                            Se crearon {resultado.nuevas_recetas.length} receta{resultado.nuevas_recetas.length === 1 ? '' : 's'} nueva{resultado.nuevas_recetas.length === 1 ? '' : 's'} automáticamente
+                            (sin ingredientes todavía): {resultado.nuevas_recetas.map((r) => r.nombre).join(', ')}.
+                        </div>
+                    )}
+                </Alert>
+            )}
             <Row>
                 <Col md={6}>
                     <Form.Group>

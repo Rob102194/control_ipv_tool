@@ -35,8 +35,9 @@ type ImportVentaItem struct {
 	RawCantidad    string
 }
 
-// Importar crea los productos cuyo nombre no exista. NO normaliza los nombres y
-// NO registra historial (igual que ImportProductosExcel en Python).
+// Importar crea los productos cuyo nombre no exista. NO normaliza los nombres
+// (igual que ImportProductosExcel en Python), pero sí registra historial de
+// creación, para que "Ordenar por Modificado" los tenga en cuenta.
 func (s *ProductoService) Importar(ctx context.Context, items []ImportProductoItem) (ImportResult, error) {
 	var res ImportResult
 	err := s.UOW.Do(ctx, func(r ports.Repos) error {
@@ -53,9 +54,14 @@ func (s *ProductoService) Importar(ctx context.Context, items []ImportProductoIt
 				res.Omitidos++
 				continue
 			}
+			id := s.IDs.New()
 			if _, err := r.Productos().Crear(ctx, domain.Producto{
-				ID: s.IDs.New(), Nombre: it.Nombre, UnidadMedida: it.UnidadMedida,
+				ID: id, Nombre: it.Nombre, UnidadMedida: it.UnidadMedida,
 			}); err != nil {
+				return err
+			}
+			if err := s.registrarCambio(ctx, r, domain.EntidadProducto, id, "Creación", "",
+				fmt.Sprintf("Producto '%s' creado (importado)", it.Nombre)); err != nil {
 				return err
 			}
 			res.Creados++
@@ -123,6 +129,10 @@ func (s *RecetaService) Importar(ctx context.Context, rows []ImportRecetaItem) (
 				rec.Ingredientes[i].RecetaID = rec.ID
 			}
 			if _, err := r.Recetas().Crear(ctx, rec); err != nil {
+				return err
+			}
+			if err := s.registrarCambio(ctx, r, domain.EntidadReceta, rec.ID, "Creación", "",
+				fmt.Sprintf("Receta '%s' creada (importada)", rec.Nombre)); err != nil {
 				return err
 			}
 			res.Creados++
@@ -205,6 +215,12 @@ func (s *VentaService) Importar(ctx context.Context, rows []ImportVentaItem, fec
 		if len(nuevas) > 0 {
 			if _, err := r.Recetas().CrearMultiples(ctx, nuevas); err != nil {
 				return err
+			}
+			for _, rec := range nuevas {
+				if err := s.registrarCambio(ctx, r, domain.EntidadReceta, rec.ID, "Creación", "",
+					fmt.Sprintf("Receta '%s' creada (importada)", rec.Nombre)); err != nil {
+					return err
+				}
 			}
 		}
 		result.NuevasRecetas = nuevas

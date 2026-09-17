@@ -144,15 +144,21 @@ paths:
     post:
       tags: [productos]
       summary: Importa productos desde Excel
-      description: Columnas obligatorias `nombre`, `unidad_medida`. Omite nombres ya existentes.
+      description: >
+        Columnas obligatorias `nombre`, `unidad_medida`. Omite nombres ya
+        existentes. El archivo viaja en Base64 dentro del JSON (no como
+        multipart/form-data): el webview de escritorio (Wails) pierde el body
+        de los POST con archivos binarios al pasar por el esquema wails://.
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
+              required: [archivo_base64]
               properties:
-                file: { type: string, format: binary }
+                archivo_base64: { type: string, format: byte, description: "Contenido del .xlsx en Base64" }
+                nombre_archivo: { type: string }
       responses:
         "200":
           description: OK
@@ -302,15 +308,18 @@ paths:
       description: >
         Columnas: receta_nombre, producto_nombre, unidad_medida, cantidad,
         area_nombre. Crea productos y áreas que no existan. Omite recetas ya
-        existentes por nombre.
+        existentes por nombre. El archivo viaja en Base64 dentro del JSON (no
+        como multipart/form-data): ver /productos/import/.
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
+              required: [archivo_base64]
               properties:
-                file: { type: string, format: binary }
+                archivo_base64: { type: string, format: byte, description: "Contenido del .xlsx en Base64" }
+                nombre_archivo: { type: string }
       responses:
         "200":
           description: OK
@@ -417,16 +426,19 @@ paths:
       summary: Importa ventas desde Excel
       description: >
         Columnas `Nombre`, `Cantidad`. Crea automáticamente las recetas cuyo
-        nombre no exista (sin ingredientes). `fecha` opcional (form field); por
-        defecto la fecha actual del servidor.
+        nombre no exista (sin ingredientes). `fecha` opcional; por defecto la
+        fecha actual del servidor. El archivo viaja en Base64 dentro del JSON
+        (no como multipart/form-data): ver /productos/import/.
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
+              required: [archivo_base64]
               properties:
-                file: { type: string, format: binary }
+                archivo_base64: { type: string, format: byte, description: "Contenido del .xlsx en Base64" }
+                nombre_archivo: { type: string }
                 fecha: { type: string, format: date }
       responses:
         "200":
