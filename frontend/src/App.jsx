@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useContext } from 'react';
-import { createBrowserRouter, RouterProvider, Link, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Link, Outlet, useLocation } from 'react-router-dom';
 import { Navbar, Nav, Container, Spinner, Button } from 'react-bootstrap';
 import { ThemeContext } from './contexts/ThemeContext';
 
@@ -12,6 +12,7 @@ const RecetaList = lazy(() => import('./views/recetas/RecetaList'));
 const RecetaForm = lazy(() => import('./views/recetas/RecetaForm'));
 const VentaList = lazy(() => import('./views/ventas/VentaList'));
 const IPVControl = lazy(() => import('./views/ipv/IPVControl'));
+const RegistroIPV = lazy(() => import('./views/ipv/RegistroIPV'));
 
 // Componente para mostrar mientras se cargan los componentes diferidos
 const Loading = () => (
@@ -24,6 +25,11 @@ const Loading = () => (
 
 const AppLayout = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const location = useLocation();
+  const isActive = (base) => {
+    if (base === '/') return location.pathname === '/' || location.pathname.startsWith('/ipv/');
+    return location.pathname.startsWith(base);
+  };
 
   return (
     <>
@@ -33,11 +39,11 @@ const AppLayout = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
-              <Nav.Link as={Link} to="/">Control IPV</Nav.Link>
-              <Nav.Link as={Link} to="/productos">Productos</Nav.Link>
-              <Nav.Link as={Link} to="/areas">Áreas</Nav.Link>
-              <Nav.Link as={Link} to="/recetas">Recetas</Nav.Link>
-              <Nav.Link as={Link} to="/ventas">Ventas</Nav.Link>
+              <Nav.Link as={Link} to="/" active={isActive('/')}>Control IPV</Nav.Link>
+              <Nav.Link as={Link} to="/productos" active={isActive('/productos')}>Productos</Nav.Link>
+              <Nav.Link as={Link} to="/areas" active={isActive('/areas')}>Áreas</Nav.Link>
+              <Nav.Link as={Link} to="/recetas" active={isActive('/recetas')}>Recetas</Nav.Link>
+              <Nav.Link as={Link} to="/ventas" active={isActive('/ventas')}>Ventas</Nav.Link>
             </Nav>
             <Button variant="outline-primary" onClick={toggleTheme}>
               {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
@@ -45,7 +51,7 @@ const AppLayout = () => {
           </Navbar.Collapse>
         </Container>
       </Navbar>
-      <Container className="mt-4">
+      <Container fluid className="mt-4 px-0">
         <Suspense fallback={<Loading />}>
           <Outlet />
         </Suspense>
@@ -59,6 +65,7 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: "/", element: <IPVControl /> },
+      { path: "/ipv/registro/:fecha", element: <RegistroIPV /> },
       { path: "/productos", element: <ProductoList /> },
       { path: "/productos/nuevo", element: <ProductoForm /> },
       { path: "/productos/editar/:id", element: <ProductoForm /> },

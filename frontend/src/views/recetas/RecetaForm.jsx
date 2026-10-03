@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Container, Alert, Spinner, Form, Row, Col, Table, Modal } from 'react-bootstrap';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Button, Container, Alert, Spinner, Form, Modal } from 'react-bootstrap';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import { Formik } from 'formik';
@@ -10,6 +10,7 @@ import recetaApi from '../../api/recetaApi';
 import * as productoApi from '../../api/productoApi';
 import areaApi from '../../api/areaApi';
 import ProductoForm from '../productos/ProductoForm';
+import { PlusIcon, BoxIcon, TrashIcon, CheckIcon } from '../../components/icons';
 
 // Esquema de validación con Yup para el formulario de recetas
 const recetaSchema = Yup.object().shape({
@@ -124,11 +125,14 @@ const RecetaForm = () => {
 
   // Renderizado del formulario con Formik
   return (
-    <Container className="mt-4">
-      <h2 className="mb-4">{id ? 'Editar Receta' : 'Nueva Receta'}</h2>
-      
+    <Container className="mt-4" style={{ maxWidth: '840px' }}>
+      <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+        <Link to="/recetas" style={{ color: 'inherit' }}>Recetas</Link> / {id ? 'Editar' : 'Nueva'}
+      </div>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '24px' }}>{id ? `Editar Receta: ${initialValues.nombre}` : 'Nueva Receta'}</h1>
+
       {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
-      
+
       <Formik
         initialValues={initialValues}
         validationSchema={recetaSchema}
@@ -137,164 +141,172 @@ const RecetaForm = () => {
       >
         {({ values, errors, touched, handleChange, handleSubmit, setFieldValue }) => (
           <Form onSubmit={handleSubmit}>
-            {/* Campo Nombre */}
-            <Form.Group className="mb-3">
-              <Form.Label>Nombre</Form.Label>
-              <Form.Control
-                type="text"
-                name="nombre"
-                value={values.nombre}
-                onChange={handleChange}
-                isInvalid={touched.nombre && !!errors.nombre}
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.nombre}
-              </Form.Control.Feedback>
-            </Form.Group>
-            
-            {/* Campo Activa */}
-            <Form.Group className="mb-3">
-              <Form.Check
-                type="switch"
-                id="activa"
-                name="activa"
-                label="Activa"
-                checked={values.activa}
-                onChange={handleChange}
-              />
-            </Form.Group>
-            
-            <h4 className="mb-3">Ingredientes</h4>
-            
-            {/* Botón para agregar un nuevo ingrediente */}
-            <div className="mb-3">
-              <Button
-                variant="outline-primary"
-                onClick={() => setFieldValue('ingredientes', [...values.ingredientes, { id: crypto.randomUUID(), producto_id: '', area_id: '', cantidad: 1 }])}
-              >
-                Agregar Ingrediente
-              </Button>
-              <Button
-                variant="outline-success"
-                className="ms-2"
-                onClick={() => setShowProductoModal(true)}
-              >
-                Crear Producto
-              </Button>
+            <div className="card mb-4">
+              <div className="d-flex gap-4 flex-wrap align-items-end">
+                {/* Campo Nombre */}
+                <Form.Group style={{ flex: 1, minWidth: '260px' }}>
+                  <Form.Label className="fw-semibold">Nombre</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="nombre"
+                    value={values.nombre}
+                    onChange={handleChange}
+                    isInvalid={touched.nombre && !!errors.nombre}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.nombre}
+                  </Form.Control.Feedback>
+                </Form.Group>
+
+                {/* Campo Activa */}
+                <Form.Check
+                  type="switch"
+                  id="activa"
+                  name="activa"
+                  label="Activa"
+                  checked={values.activa}
+                  onChange={handleChange}
+                  className="pb-2"
+                />
+              </div>
             </div>
-            
+
+            <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+              <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Ingredientes</h2>
+              <div className="d-flex gap-2">
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  className="d-inline-flex align-items-center gap-2"
+                  onClick={() => setFieldValue('ingredientes', [...values.ingredientes, { id: crypto.randomUUID(), producto_id: '', area_id: '', cantidad: 1 }])}
+                >
+                  <PlusIcon size={14} /> Agregar Ingrediente
+                </Button>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  className="d-inline-flex align-items-center gap-2"
+                  onClick={() => setShowProductoModal(true)}
+                >
+                  <BoxIcon size={14} /> Crear Producto
+                </Button>
+              </div>
+            </div>
+
             {/* Muestra error general de ingredientes (ej. lista vacía) */}
             {touched.ingredientes && typeof errors.ingredientes === 'string' && (
               <div className="text-danger mb-3">{errors.ingredientes}</div>
             )}
-            
-            {/* Tabla para gestionar los ingredientes */}
-            <Table striped bordered hover>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Área</th>
-                  <th>Cantidad</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {values.ingredientes.map((ing, index) => (
-                  <tr key={ing.id ?? index}>
-                    {/* Columna Producto con autocompletado */}
-                    <td>
-                      <Typeahead
-                        id={`producto-typeahead-${index}`}
-                        options={productos}
-                        labelKey={option => `${option.nombre} (${option.unidad_medida})`}
-                        selected={productos.filter(p => p.id === ing.producto_id)}
-                        onChange={(selected) => {
-                          const productoId = selected.length > 0 ? selected[0].id : '';
-                          setFieldValue(`ingredientes.${index}.producto_id`, productoId);
-                        }}
-                        placeholder="Escriba para buscar un producto..."
-                        isInvalid={touched.ingredientes?.[index]?.producto_id && !!errors.ingredientes?.[index]?.producto_id}
-                      />
-                      {touched.ingredientes?.[index]?.producto_id && errors.ingredientes?.[index]?.producto_id && (
-                        <div className="text-danger" style={{ fontSize: '0.875em', marginTop: '0.25rem' }}>
-                          {errors.ingredientes[index].producto_id}
-                        </div>
-                      )}
-                    </td>
-                    {/* Columna Área */}
-                    <td>
-                      <Form.Select
-                        name={`ingredientes.${index}.area_id`}
-                        value={ing.area_id}
-                        onChange={handleChange}
-                        isInvalid={touched.ingredientes?.[index]?.area_id && !!errors.ingredientes?.[index]?.area_id}
-                      >
-                        <option value="">Seleccione un área</option>
-                        {areas.map(a => (
-                          <option key={a.id} value={a.id}>
-                            {a.nombre}
-                          </option>
-                        ))}
-                      </Form.Select>
-                      {touched.ingredientes?.[index]?.area_id && errors.ingredientes?.[index]?.area_id && (
-                        <div className="text-danger">{errors.ingredientes[index].area_id}</div>
-                      )}
-                    </td>
-                    {/* Columna Cantidad */}
-                    <td>
-                      <Form.Control
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        name={`ingredientes.${index}.cantidad`}
-                        value={ing.cantidad}
-                        onChange={handleChange}
-                        isInvalid={touched.ingredientes?.[index]?.cantidad && !!errors.ingredientes?.[index]?.cantidad}
-                      />
-                      {touched.ingredientes?.[index]?.cantidad && errors.ingredientes?.[index]?.cantidad && (
-                        <div className="text-danger">{errors.ingredientes[index].cantidad}</div>
-                      )}
-                    </td>
-                    {/* Columna Acciones */}
-                    <td>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => {
-                          const newIngs = [...values.ingredientes];
-                          newIngs.splice(index, 1);
-                          setFieldValue('ingredientes', newIngs);
-                        }}
-                      >
-                        Eliminar
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-            
+
+            {/* Constructor de ingredientes */}
+            <div className="ing-builder mb-4">
+              <div className="ing-head">
+                <span>Producto</span><span>Área</span><span>Cantidad</span><span></span>
+              </div>
+              {values.ingredientes.length === 0 && (
+                <div className="p-4 text-center" style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  Todavía no hay ingredientes. Usa "Agregar Ingrediente" para empezar.
+                </div>
+              )}
+              {values.ingredientes.map((ing, index) => (
+                <div className="ing-row" key={ing.id ?? index}>
+                  {/* Columna Producto con autocompletado */}
+                  <div>
+                    <Typeahead
+                      id={`producto-typeahead-${index}`}
+                      options={productos}
+                      labelKey={option => `${option.nombre} (${option.unidad_medida})`}
+                      selected={productos.filter(p => p.id === ing.producto_id)}
+                      onChange={(selected) => {
+                        const productoId = selected.length > 0 ? selected[0].id : '';
+                        setFieldValue(`ingredientes.${index}.producto_id`, productoId);
+                      }}
+                      placeholder="Escriba para buscar un producto..."
+                      isInvalid={touched.ingredientes?.[index]?.producto_id && !!errors.ingredientes?.[index]?.producto_id}
+                    />
+                    {touched.ingredientes?.[index]?.producto_id && errors.ingredientes?.[index]?.producto_id && (
+                      <div className="text-danger" style={{ fontSize: '0.8125rem', marginTop: '0.25rem' }}>
+                        {errors.ingredientes[index].producto_id}
+                      </div>
+                    )}
+                  </div>
+                  {/* Columna Área */}
+                  <div>
+                    <Form.Select
+                      name={`ingredientes.${index}.area_id`}
+                      value={ing.area_id}
+                      onChange={handleChange}
+                      isInvalid={touched.ingredientes?.[index]?.area_id && !!errors.ingredientes?.[index]?.area_id}
+                    >
+                      <option value="">Seleccione un área</option>
+                      {areas.map(a => (
+                        <option key={a.id} value={a.id}>
+                          {a.nombre}
+                        </option>
+                      ))}
+                    </Form.Select>
+                    {touched.ingredientes?.[index]?.area_id && errors.ingredientes?.[index]?.area_id && (
+                      <div className="text-danger" style={{ fontSize: '0.8125rem', marginTop: '0.25rem' }}>{errors.ingredientes[index].area_id}</div>
+                    )}
+                  </div>
+                  {/* Columna Cantidad */}
+                  <div>
+                    <Form.Control
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      name={`ingredientes.${index}.cantidad`}
+                      value={ing.cantidad}
+                      onChange={handleChange}
+                      isInvalid={touched.ingredientes?.[index]?.cantidad && !!errors.ingredientes?.[index]?.cantidad}
+                      style={{ textAlign: 'right' }}
+                    />
+                    {touched.ingredientes?.[index]?.cantidad && errors.ingredientes?.[index]?.cantidad && (
+                      <div className="text-danger" style={{ fontSize: '0.8125rem', marginTop: '0.25rem' }}>{errors.ingredientes[index].cantidad}</div>
+                    )}
+                  </div>
+                  {/* Columna Acciones */}
+                  <Button
+                    variant="outline-danger"
+                    className="d-inline-flex align-items-center justify-content-center"
+                    style={{ width: '34px', height: '34px', padding: 0 }}
+                    aria-label={`Quitar ${ing.producto_id ? 'ingrediente' : 'fila'}`}
+                    onClick={() => {
+                      const newIngs = [...values.ingredientes];
+                      newIngs.splice(index, 1);
+                      setFieldValue('ingredientes', newIngs);
+                    }}
+                  >
+                    <TrashIcon size={14} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
             {/* Botones de acción del formulario */}
             <div className="d-flex justify-content-end gap-2">
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="outline-secondary"
                 onClick={() => navigate('/recetas')}
                 disabled={saving}
               >
                 Cancelar
               </Button>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 type="submit"
                 disabled={saving}
+                className="d-inline-flex align-items-center gap-2"
               >
                 {saving ? (
                   <>
-                    <Spinner animation="border" size="sm" className="me-2" />
+                    <Spinner animation="border" size="sm" />
                     Guardando...
                   </>
                 ) : (
-                  'Guardar'
+                  <>
+                    <CheckIcon size={15} /> Guardar
+                  </>
                 )}
               </Button>
             </div>

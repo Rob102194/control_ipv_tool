@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 // Importaciones de la API de productos
 import { obtenerProductos, eliminarProducto, exportarProductos, importarProductos } from '../../api/productoApi';
 import { obtenerHistorial } from '../../api/historialApi';
+import { DownloadIcon, UploadIcon, ClockIcon, PlusIcon, SearchIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para mostrar la lista de productos
 const ProductoList = () => {
@@ -133,17 +134,20 @@ const ProductoList = () => {
   // Renderiza la lista de productos
   return (
     <Container className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Productos</h1>
+      <div className="page-header">
         <div>
-          <Button variant="success" onClick={handleExportar} className="me-2">
-            Exportar
+          <h1>Productos</h1>
+          <p>Busca, edita y gestiona el catálogo de productos.</p>
+        </div>
+        <div className="page-actions">
+          <Button variant="outline-secondary" onClick={handleExportar}>
+            <DownloadIcon size={15} /> Exportar
           </Button>
-          <Button variant="info" onClick={handleImportClick} className="me-2">
-            Importar
+          <Button variant="outline-secondary" onClick={handleImportClick}>
+            <UploadIcon size={15} /> Importar
           </Button>
-          <Button variant="secondary" onClick={handleShowHistory} className="me-2">
-            Historial
+          <Button variant="outline-secondary" onClick={handleShowHistory}>
+            <ClockIcon size={15} /> Historial
           </Button>
           <input
             type="file"
@@ -152,8 +156,8 @@ const ProductoList = () => {
             onChange={handleImportar}
             accept=".xlsx, .xls"
           />
-          <Link to="/productos/nuevo" className="btn btn-primary ms-2">
-            Nuevo Producto
+          <Link to="/productos/nuevo" className="btn btn-primary d-inline-flex align-items-center gap-2">
+            <PlusIcon size={15} /> Nuevo Producto
           </Link>
         </div>
       </div>
@@ -162,58 +166,62 @@ const ProductoList = () => {
 
       {/* Campo de búsqueda y ordenamiento */}
       <Form.Group className="mb-3 d-flex">
-        <Form.Control
-          type="text"
-          placeholder="Buscar producto por nombre..."
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className="me-2"
-        />
+        <div className="search-wrap me-2" style={{ flex: 1 }}>
+          <span className="search-icon"><SearchIcon size={15} /></span>
+          <Form.Control
+            type="text"
+            placeholder="Buscar producto por nombre..."
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+          />
+        </div>
         <Form.Select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ width: '200px' }}>
           <option value="nombre">Ordenar por Nombre</option>
           <option value="modificado">Ordenar por Modificado</option>
         </Form.Select>
       </Form.Group>
 
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Unidad de Medida</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {productosFiltrados.length === 0 ? (
+      <div className="list-card">
+        <table className="list-table">
+          <thead>
             <tr>
-              <td colSpan="3" className="text-center">No se encontraron productos.</td>
+              <th>Nombre</th>
+              <th>Unidad de Medida</th>
+              <th>Acciones</th>
             </tr>
-          ) : (
-            productosFiltrados.map((producto) => (
-              <tr key={producto.id}>
-                <td>{producto.nombre}</td>
-                <td>{producto.unidad_medida}</td>
-                <td>
-                  {/* Enlaces para editar y eliminar */}
-                  <Link 
-                    to={`/productos/editar/${producto.id}`} 
-                    className="btn btn-sm btn-warning me-2"
-                  >
-                    Editar
-                  </Link>
-                  <Button 
-                    variant="danger" 
-                    size="sm"
-                    onClick={() => handleEliminar(producto.id)}
-                  >
-                    Eliminar
-                  </Button>
-                </td>
+          </thead>
+          <tbody>
+            {productosFiltrados.length === 0 ? (
+              <tr>
+                <td colSpan="3" style={{ textAlign: 'center' }}>No se encontraron productos.</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </Table>
+            ) : (
+              productosFiltrados.map((producto) => (
+                <tr key={producto.id}>
+                  <td data-label="Nombre" style={{ fontWeight: 600 }}>{producto.nombre}</td>
+                  <td data-label="Unidad de medida" style={{ color: 'var(--text-secondary)' }}>{producto.unidad_medida}</td>
+                  <td data-label="">
+                    <Link
+                      to={`/productos/editar/${producto.id}`}
+                      className="btn btn-outline-secondary btn-sm me-2 d-inline-flex align-items-center gap-1"
+                    >
+                      <PencilIcon size={13} /> Editar
+                    </Link>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      className="d-inline-flex align-items-center gap-1"
+                      onClick={() => handleEliminar(producto.id)}
+                    >
+                      <TrashIcon size={13} /> Eliminar
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       <Modal show={showHistory} onHide={handleCloseHistory}>
         <Modal.Header closeButton>

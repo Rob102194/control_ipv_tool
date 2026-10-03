@@ -7,3 +7,12 @@ export function formatDateLocal(date) {
     const pad = (n) => String(n).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
+
+// Formatea una fecha "YYYY-MM-DD" en español ("12 de junio de 2026"),
+// construyendo el Date con el calendario local (ver nota de formatDateLocal).
+export function formatDateEs(fechaISO) {
+    if (!fechaISO) return '';
+    const [y, m, d] = fechaISO.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+}

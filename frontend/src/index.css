@@ -11,6 +11,14 @@
   --error: #c7133d;
   --warning: #eecb79;
 
+  /* Variantes suaves (fondos de badges/estados) derivadas de los colores base */
+  --color-primary-soft: rgba(26, 50, 156, 0.1);
+  --color-tertiary-soft: rgba(6, 173, 129, 0.14);
+  --error-soft: rgba(199, 19, 61, 0.14);
+  --warning-soft: rgba(238, 203, 121, 0.35);
+  --warning-ink: #7a5d15;
+  --text-secondary-soft: rgba(100, 116, 139, 0.12);
+
   /* Estilos base */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -113,6 +121,11 @@ body {
   box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
 }
 
+.navbar .nav-link.active {
+  color: var(--color-primary) !important;
+  font-weight: 600;
+}
+
 /* Dark Mode Palette */
 [data-theme='dark'] {
   --color-base: #1E293B;
@@ -125,6 +138,13 @@ body {
   --card-bg: #293548;
   --error: #EF4444;
   --warning: #F59E0B;
+
+  --color-primary-soft: rgba(59, 130, 246, 0.16);
+  --color-tertiary-soft: rgba(16, 185, 129, 0.18);
+  --error-soft: rgba(239, 68, 68, 0.18);
+  --warning-soft: rgba(245, 158, 11, 0.2);
+  --warning-ink: #F59E0B;
+  --text-secondary-soft: rgba(148, 163, 184, 0.16);
 }
 
 [data-theme='dark'] body {
@@ -146,3 +166,304 @@ body {
     background-color: var(--color-base);
     min-height: 100vh;
 }
+
+/* ---- Componentes del rediseño de IPV / dashboard ---- */
+
+.ipv-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+.ipv-icon-btn:hover { color: var(--text-main); }
+
+.ipv-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-main);
+  background-color: var(--warning-soft);
+}
+.ipv-status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning); flex-shrink: 0; }
+
+.ipv-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ipv-badge-pos { background-color: var(--color-tertiary-soft); color: var(--color-tertiary); }
+.ipv-badge-neg { background-color: var(--error-soft); color: var(--error); }
+.ipv-badge-zero { background-color: var(--text-secondary-soft); color: var(--text-secondary); }
+.ipv-badge-warn { background-color: var(--warning-soft); color: var(--warning-ink); }
+
+.ipv-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.ipv-tab:hover { color: var(--text-main); }
+.ipv-tab.active { background-color: var(--color-primary); color: #fff; }
+.ipv-tab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background-color: var(--border-color); }
+
+.ipv-table-wrap { overflow: auto; border-radius: 8px; border: 1px solid var(--border-color); }
+.ipv-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+.ipv-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: right;
+  padding: 10px 14px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+.ipv-table thead th:first-child { text-align: left; }
+.ipv-table tbody td {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  font-size: 0.875rem;
+}
+.ipv-table tbody tr:last-child td { border-bottom: none; }
+.ipv-table tbody tr:nth-of-type(odd) td { background-color: var(--color-base); }
+.ipv-table td.ipv-col-ing,
+.ipv-table th.ipv-col-ing {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  font-weight: 600;
+  box-shadow: 1px 0 0 var(--border-color);
+  background-color: inherit;
+}
+.ipv-table thead th.ipv-col-ing { z-index: 3; background-color: var(--card-bg); }
+
+.ipv-cell-readonly { background-color: color-mix(in srgb, var(--color-primary) 6%, var(--card-bg)); }
+.ipv-cell-readonly-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ipv-cell-input {
+  width: 60px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ipv-comment-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  color: var(--text-secondary);
+  opacity: 0.45;
+  flex-shrink: 0;
+}
+.ipv-comment-btn:hover { opacity: 0.8; }
+.ipv-comment-btn.has-comment {
+  opacity: 1;
+  color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+}
+
+.area-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.area-card:hover { box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08); }
+.area-icon-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+.list-row:last-child { border-bottom: none; }
+
+.ipv-more-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 200px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+.ipv-more-menu button {
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+.ipv-more-menu button:hover { background-color: var(--color-base); }
+
+/* ---- Listas y formularios (Productos/Áreas/Recetas/Ventas) ---- */
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.page-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 6px; }
+.page-header p { margin: 0; color: var(--text-secondary); font-size: 0.875rem; }
+.page-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.btn-outline-danger {
+  color: var(--error);
+  border-color: var(--border-color);
+  background-color: transparent;
+}
+.btn-outline-danger:hover { background-color: var(--error); color: #fff; border-color: var(--error); }
+
+.search-wrap { position: relative; }
+.search-wrap .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+  display: flex;
+}
+.search-wrap input { padding-left: 34px !important; }
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.375rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  background-color: var(--card-bg);
+  cursor: pointer;
+}
+.filter-chip-dot { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; flex-shrink: 0; }
+.filter-chip.active {
+  color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+.filter-chip.active .filter-chip-dot { background-color: currentColor; }
+
+.list-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+.list-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+.list-table thead th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 12px 20px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+.list-table tbody td { padding: 12px 20px; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; vertical-align: middle; }
+.list-table tbody tr:last-child td { border-bottom: none; }
+.list-table tbody tr:nth-of-type(odd) td { background-color: var(--color-base); }
+.list-table .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Tabla -> tarjetas apiladas en mobile, usando el data-label de cada celda. */
+@media (max-width: 640px) {
+  .list-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .list-table, .list-table tbody, .list-table tr, .list-table td { display: block; width: 100%; }
+  .list-table tr { border-bottom: 1px solid var(--border-color); padding: 12px 4px; }
+  .list-table tbody tr:nth-of-type(odd) td { background-color: transparent; }
+  .list-table td { border: none; padding: 4px 0; }
+  .list-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+  .list-table td[data-label=""]::before, .list-table td:not([data-label])::before { content: none; }
+}
+
+.switch-field { display: flex; align-items: center; gap: 10px; }
+
+.ing-builder { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
+.ing-head, .ing-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 0.7fr 40px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+}
+.ing-head {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+.ing-row { border-bottom: 1px solid var(--border-color); padding-top: 12px; padding-bottom: 12px; }
+.ing-row:last-child { border-bottom: none; }

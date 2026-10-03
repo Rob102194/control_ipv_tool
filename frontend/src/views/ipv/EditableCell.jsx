@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import CommentModal from './CommentModal';
+import { MessageCircleIcon } from '../../components/icons';
 
 // Evalúa expresiones aritméticas simples (+ - * / y paréntesis) sin usar
 // eval(): evita ejecutar JS arbitrario y el bug de los literales octales
@@ -114,7 +115,7 @@ function EditableCell({ value, onChange, onCommentChange, comment, label }) {
     );
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
             {comment ? (
                 <OverlayTrigger
                     placement="top"
@@ -122,6 +123,7 @@ function EditableCell({ value, onChange, onCommentChange, comment, label }) {
                 >
                     <Form.Control
                         type="text"
+                        className="ipv-cell-input"
                         value={inputValue}
                         onFocus={handleFocus}
                         onBlur={handleBlur}
@@ -134,6 +136,7 @@ function EditableCell({ value, onChange, onCommentChange, comment, label }) {
             ) : (
                 <Form.Control
                     type="text"
+                    className="ipv-cell-input"
                     value={inputValue}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
@@ -144,12 +147,12 @@ function EditableCell({ value, onChange, onCommentChange, comment, label }) {
                 />
             )}
             <Button
-                variant={comment ? "info" : "link"}
-                size="sm"
+                variant="link"
+                className={`ipv-comment-btn${comment ? ' has-comment' : ''}`}
                 onClick={() => setShowCommentModal(true)}
                 aria-label={comment ? `Editar comentario de ${label}` : `Agregar comentario a ${label}`}
             >
-                ...
+                <MessageCircleIcon size={13} />
             </Button>
             <CommentModal
                 show={showCommentModal}

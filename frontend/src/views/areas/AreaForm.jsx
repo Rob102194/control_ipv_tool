@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Container, Alert, Spinner } from 'react-bootstrap';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 // Importación de la API de áreas
 import areaApi from '../../api/areaApi';
+import { CheckIcon } from '../../components/icons';
 
 // Componente de formulario para crear y editar áreas
 const AreaForm = () => {
@@ -86,62 +87,70 @@ const AreaForm = () => {
 
   // Renderiza el formulario
   return (
-    <Container className="mt-4">
-      <h2 className="mb-4">{id ? 'Editar Área' : 'Nueva Área'}</h2>
-      
+    <Container className="mt-4" style={{ maxWidth: '560px' }}>
+      <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+        <Link to="/areas" style={{ color: 'inherit' }}>Áreas</Link> / {id ? 'Editar' : 'Nueva'}
+      </div>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '24px' }}>{id ? 'Editar Área' : 'Nueva Área'}</h1>
+
       {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
-      
-      <Form onSubmit={handleSubmit}>
-        {/* Campo Nombre */}
-        <Form.Group className="mb-3">
-          <Form.Label>Nombre</Form.Label>
-          <Form.Control
-            type="text"
-            name="nombre"
-            value={area.nombre}
-            onChange={handleChange}
-            required
-            placeholder="Ej: Pizzeria"
-          />
-        </Form.Group>
-        
-        {/* Campo Código */}
-        <Form.Group className="mb-3">
-          <Form.Label>Código (Opcional)</Form.Label>
-          <Form.Control
-            type="text"
-            name="codigo"
-            value={area.codigo}
-            onChange={handleChange}
-            placeholder="Ej: PZ"
-          />
-        </Form.Group>
-        
-        {/* Botones de acción */}
-        <div className="d-flex justify-content-end gap-2">
-          <Button 
-            variant="secondary" 
-            onClick={() => navigate('/areas')}
-            disabled={saving}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            variant="primary" 
-            type="submit"
-            disabled={saving}
-          >
-            {saving ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Guardando...
-              </>
-            ) : (
-              'Guardar'
-            )}
-          </Button>
-        </div>
-      </Form>
+
+      <div className="card">
+        <Form onSubmit={handleSubmit}>
+          {/* Campo Nombre */}
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Nombre</Form.Label>
+            <Form.Control
+              type="text"
+              name="nombre"
+              value={area.nombre}
+              onChange={handleChange}
+              required
+              placeholder="Ej: Pizzeria"
+            />
+          </Form.Group>
+
+          {/* Campo Código */}
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Código (Opcional)</Form.Label>
+            <Form.Control
+              type="text"
+              name="codigo"
+              value={area.codigo}
+              onChange={handleChange}
+              placeholder="Ej: PZ"
+            />
+          </Form.Group>
+
+          {/* Botones de acción */}
+          <div className="d-flex justify-content-end gap-2 pt-2 mt-2 border-top">
+            <Button
+              variant="outline-secondary"
+              onClick={() => navigate('/areas')}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={saving}
+              className="d-inline-flex align-items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <Spinner animation="border" size="sm" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <CheckIcon size={15} /> Guardar
+                </>
+              )}
+            </Button>
+          </div>
+        </Form>
+      </div>
     </Container>
   );
 };

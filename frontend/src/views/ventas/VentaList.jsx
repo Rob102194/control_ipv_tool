@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Container, Alert, Spinner, Form, Row, Col } from 'react-bootstrap';
+import { Button, Container, Alert, Spinner, Form, Row, Col } from 'react-bootstrap';
 import { getVentas, updateVenta, deleteVenta, importVentas, deleteVentas } from '../../api/ventaApi';
 import { formatDateLocal } from '../../utils/date';
+import { PencilIcon, TrashIcon, SearchIcon } from '../../components/icons';
 
 // Componente principal para la gestión de ventas.
 const VentaList = () => {
@@ -11,11 +12,28 @@ const VentaList = () => {
     // Renderiza el componente principal y redirige a la vista seleccionada.
     return (
         <Container className="mt-4">
-            <h1>Gestión de Ventas</h1>
-            <hr />
-            <Button variant="primary" className="me-2" onClick={() => setView('importar')}>Importar Ventas</Button>
-            <Button variant="info" onClick={() => setView('consultar')}>Consultar Ventas</Button>
-            <hr />
+            <div className="mb-4">
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '6px' }}>Ventas</h1>
+                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    Importa las ventas del día o consulta y corrige lo ya importado.
+                </p>
+            </div>
+            <div style={{ display: 'inline-flex', gap: '4px', backgroundColor: 'var(--color-base)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '4px', marginBottom: '24px' }}>
+                <button
+                    type="button"
+                    className={`ipv-tab${view === 'importar' ? ' active' : ''}`}
+                    onClick={() => setView('importar')}
+                >
+                    Importar Ventas
+                </button>
+                <button
+                    type="button"
+                    className={`ipv-tab${view === 'consultar' ? ' active' : ''}`}
+                    onClick={() => setView('consultar')}
+                >
+                    Consultar Ventas
+                </button>
+            </div>
             {view === 'importar' ? <ImportarVentas /> : <ConsultarVentas />}
         </Container>
     );
@@ -52,8 +70,8 @@ const ImportarVentas = () => {
     };
 
     return (
-        <div>
-            <h2>Importar Ventas desde Excel</h2>
+        <div className="card" style={{ maxWidth: '720px' }}>
+            <h2 style={{ fontSize: '1.0625rem', fontWeight: 700, marginBottom: '16px' }}>Importar Ventas desde Excel</h2>
             {error && <Alert variant="danger">{error}</Alert>}
             {resultado && (
                 <Alert variant="success" onClose={() => setResultado(null)} dismissible>
@@ -69,18 +87,18 @@ const ImportarVentas = () => {
             <Row>
                 <Col md={6}>
                     <Form.Group>
-                        <Form.Label>Archivo Excel</Form.Label>
+                        <Form.Label className="fw-semibold">Archivo Excel</Form.Label>
                         <Form.Control type="file" accept=".xlsx, .xls" onChange={(e) => setFile(e.target.files[0])} />
                     </Form.Group>
                 </Col>
                 <Col md={6}>
                     <Form.Group>
-                        <Form.Label>Fecha de las Ventas</Form.Label>
+                        <Form.Label className="fw-semibold">Fecha de las Ventas</Form.Label>
                         <Form.Control type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
                     </Form.Group>
                 </Col>
             </Row>
-            <Button variant="secondary" onClick={handleImport} className="mt-3" disabled={!file || !fecha || loading}>
+            <Button variant="primary" onClick={handleImport} className="mt-3" disabled={!file || !fecha || loading}>
                 {loading ? <><Spinner as="span" animation="border" size="sm" /> Importando...</> : 'Importar'}
             </Button>
         </div>
@@ -217,90 +235,109 @@ const ConsultarVentas = () => {
 
     return (
         <div>
-            <h2>Consultar Ventas</h2>
             {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
-            <Row className="mb-3">
-                <Col md={4}>
-                    <Form.Group>
-                        <Form.Label>Fecha</Form.Label>
-                        <Form.Control type="date" value={fechaConsulta} onChange={(e) => setFechaConsulta(e.target.value)} />
-                    </Form.Group>
-                </Col>
-                <Col md={4}>
-                    <Form.Group>
-                        <Form.Label>Buscar por Receta</Form.Label>
-                        <Form.Control
-                            type="text"
-                            placeholder="Nombre de la receta..."
-                            value={filtroNombre}
-                            onChange={(e) => setFiltroNombre(e.target.value)}
-                        />
-                    </Form.Group>
-                </Col>
-                <Col md={4} className="d-flex align-items-end">
-                    {selectedIds.length > 0 && (
-                        <Button variant="danger" onClick={handleDeleteSelected}>
-                            Eliminar ({selectedIds.length}) Seleccionadas
-                        </Button>
-                    )}
-                </Col>
-            </Row>
-            <Table striped bordered hover responsive>
-                <thead>
-                    <tr>
-                        <th>
-                            <Form.Check
-                                type="checkbox"
-                                aria-label="Seleccionar todas las ventas"
-                                onChange={handleSelectAll}
-                                checked={selectedIds.length === ventas.length && ventas.length > 0}
-                            />
-                        </th>
-                        <th>Receta</th>
-                        <th>Cantidad</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {ventas.length === 0 ? (
-                        <tr><td colSpan="5" className="text-center">No hay ventas para la fecha seleccionada.</td></tr>
-                    ) : (
-                        ventas.map(venta => (
-                            <tr key={venta.id}>
-                                <td>
-                                    <Form.Check
-                                        type="checkbox"
-                                        aria-label={`Seleccionar venta de ${venta.receta_nombre} del ${venta.fecha}`}
-                                        checked={selectedIds.includes(venta.id)}
-                                        onChange={() => handleSelect(venta.id)}
-                                    />
-                                </td>
-                                <td>{venta.receta_nombre}</td>
-                                {editingId === venta.id ? (
-                                    <>
-                                        <td><Form.Control type="number" name="cantidad" value={editedData.cantidad} onChange={handleFieldChange} /></td>
-                                        <td><Form.Control type="date" name="fecha" value={editedData.fecha} onChange={handleFieldChange} /></td>
-                                        <td>
-                                            <Button variant="success" size="sm" onClick={() => handleSave(venta.id)}>Guardar</Button>
-                                            <Button variant="secondary" size="sm" className="ms-2" onClick={handleCancel}>Cancelar</Button>
-                                        </td>
-                                    </>
-                                ) : (
-                                    <>
-                                        <td>{venta.cantidad}</td>
-                                        <td>{venta.fecha}</td>
-                                        <td>
-                                            <Button variant="warning" size="sm" onClick={() => handleEdit(venta)}>Editar</Button>
-                                            <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(venta.id)}>Eliminar</Button>
-                                        </td>
-                                    </>
-                                )}
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </Table>
+            <div className="card mb-3">
+                <Row className="align-items-end g-3">
+                    <Col md={3}>
+                        <Form.Group>
+                            <Form.Label className="fw-semibold">Fecha</Form.Label>
+                            <Form.Control type="date" value={fechaConsulta} onChange={(e) => setFechaConsulta(e.target.value)} />
+                        </Form.Group>
+                    </Col>
+                    <Col md={5}>
+                        <Form.Group>
+                            <Form.Label className="fw-semibold">Buscar por Receta</Form.Label>
+                            <div className="search-wrap">
+                                <span className="search-icon"><SearchIcon size={15} /></span>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Nombre de la receta..."
+                                    value={filtroNombre}
+                                    onChange={(e) => setFiltroNombre(e.target.value)}
+                                />
+                            </div>
+                        </Form.Group>
+                    </Col>
+                    <Col md={4} className="d-flex justify-content-end">
+                        {selectedIds.length > 0 && (
+                            <Button variant="danger" className="d-inline-flex align-items-center gap-2" onClick={handleDeleteSelected}>
+                                <TrashIcon size={15} /> Eliminar ({selectedIds.length}) seleccionadas
+                            </Button>
+                        )}
+                    </Col>
+                </Row>
+            </div>
+            <div className="list-card">
+                <table className="list-table">
+                    <thead>
+                        <tr>
+                            <th style={{ width: '40px' }}>
+                                <Form.Check
+                                    type="checkbox"
+                                    aria-label="Seleccionar todas las ventas"
+                                    onChange={handleSelectAll}
+                                    checked={selectedIds.length === ventas.length && ventas.length > 0}
+                                />
+                            </th>
+                            <th>Receta</th>
+                            <th>Cantidad</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {ventas.length === 0 ? (
+                            <tr><td colSpan="5" style={{ textAlign: 'center' }}>No hay ventas para la fecha seleccionada.</td></tr>
+                        ) : (
+                            ventas.map(venta => (
+                                <tr
+                                    key={venta.id}
+                                    style={
+                                        editingId === venta.id
+                                            ? { backgroundColor: 'var(--warning-soft)' }
+                                            : selectedIds.includes(venta.id)
+                                                ? { backgroundColor: 'var(--color-primary-soft)' }
+                                                : undefined
+                                    }
+                                >
+                                    <td data-label="">
+                                        <Form.Check
+                                            type="checkbox"
+                                            aria-label={`Seleccionar venta de ${venta.receta_nombre} del ${venta.fecha}`}
+                                            checked={selectedIds.includes(venta.id)}
+                                            onChange={() => handleSelect(venta.id)}
+                                        />
+                                    </td>
+                                    <td data-label="Receta" style={{ fontWeight: 600 }}>{venta.receta_nombre}</td>
+                                    {editingId === venta.id ? (
+                                        <>
+                                            <td data-label="Cantidad"><Form.Control type="number" name="cantidad" value={editedData.cantidad} onChange={handleFieldChange} /></td>
+                                            <td data-label="Fecha"><Form.Control type="date" name="fecha" value={editedData.fecha} onChange={handleFieldChange} /></td>
+                                            <td data-label="">
+                                                <Button variant="primary" size="sm" className="me-2" onClick={() => handleSave(venta.id)}>Guardar</Button>
+                                                <Button variant="outline-secondary" size="sm" onClick={handleCancel}>Cancelar</Button>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td data-label="Cantidad">{venta.cantidad}</td>
+                                            <td data-label="Fecha">{venta.fecha}</td>
+                                            <td data-label="">
+                                                <Button variant="outline-secondary" size="sm" className="me-2 d-inline-flex align-items-center gap-1" onClick={() => handleEdit(venta)}>
+                                                    <PencilIcon size={13} /> Editar
+                                                </Button>
+                                                <Button variant="outline-danger" size="sm" className="d-inline-flex align-items-center gap-1" onClick={() => handleDelete(venta.id)}>
+                                                    <TrashIcon size={13} /> Eliminar
+                                                </Button>
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

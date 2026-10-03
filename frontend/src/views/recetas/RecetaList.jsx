@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Table, Button, Container, Alert, Spinner, Badge, Form, Modal } from 'react-bootstrap';
+import { Table, Button, Container, Alert, Spinner, Form, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import recetaApi from '../../api/recetaApi';
 import { obtenerHistorial } from '../../api/historialApi';
+import { DownloadIcon, UploadIcon, ClockIcon, PlusIcon, SearchIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para listar, gestionar e importar recetas
 const RecetaList = () => {
@@ -147,29 +148,27 @@ const RecetaList = () => {
   // Renderizado del componente
   return (
     <Container className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Recetas</h1>
+      <div className="page-header">
         <div>
-          <Button variant="success" onClick={handleExportar} className="me-2">
-            Exportar
+          <h1>Recetas</h1>
+          <p>Cada receta convierte una venta en consumo de ingredientes por área.</p>
+        </div>
+        <div className="page-actions">
+          <Button variant="outline-secondary" onClick={handleExportar}>
+            <DownloadIcon size={15} /> Exportar
           </Button>
-          <Button 
-            variant="info" 
-            className="me-2"
-            onClick={handleImportClick}
-            disabled={importing}
-          >
+          <Button variant="outline-secondary" onClick={handleImportClick} disabled={importing}>
             {importing ? (
               <>
                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
                 <span className="visually-hidden">Importando...</span>
               </>
             ) : (
-              'Importar'
+              <><UploadIcon size={15} /> Importar</>
             )}
           </Button>
-          <Button variant="secondary" onClick={handleShowHistory} className="me-2">
-            Historial
+          <Button variant="outline-secondary" onClick={handleShowHistory}>
+            <ClockIcon size={15} /> Historial
           </Button>
           <input
             type="file"
@@ -178,8 +177,8 @@ const RecetaList = () => {
             onChange={handleFileChange}
             accept=".xlsx, .xls"
           />
-          <Link to="/recetas/nuevo" className="btn btn-primary ms-2">
-            Nueva Receta
+          <Link to="/recetas/nuevo" className="btn btn-primary d-inline-flex align-items-center gap-2">
+            <PlusIcon size={15} /> Nueva Receta
           </Link>
         </div>
       </div>
@@ -194,74 +193,87 @@ const RecetaList = () => {
       )}
 
       {/* Campo de búsqueda, ordenamiento y filtro */}
-      <Form.Group className="mb-3 d-flex align-items-center">
-        <Form.Control
-          type="text"
-          placeholder="Buscar receta por nombre..."
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className="me-2"
-        />
-        <Form.Select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ width: '200px' }} className="me-2">
+      <Form.Group className="mb-3 d-flex align-items-center gap-2">
+        <div className="search-wrap" style={{ flex: 1 }}>
+          <span className="search-icon"><SearchIcon size={15} /></span>
+          <Form.Control
+            type="text"
+            placeholder="Buscar receta por nombre..."
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+          />
+        </div>
+        <Form.Select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ width: '200px' }}>
           <option value="nombre">Ordenar por Nombre</option>
           <option value="modificado">Ordenar por Modificado</option>
         </Form.Select>
-        <Form.Check
-          type="checkbox"
-          label="Sin ingredientes"
-          checked={filterBy === 'sin_ingredientes'}
-          onChange={(e) => setFilterBy(e.target.checked ? 'sin_ingredientes' : '')}
-        />
+        <button
+          type="button"
+          className={`filter-chip${filterBy === 'sin_ingredientes' ? ' active' : ''}`}
+          onClick={() => setFilterBy(filterBy === 'sin_ingredientes' ? '' : 'sin_ingredientes')}
+        >
+          <span className="filter-chip-dot"></span> Sin ingredientes
+        </button>
       </Form.Group>
 
       {/* Tabla con la lista de recetas */}
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Estado</th>
-            <th>Ingredientes</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recetasFiltradas.length === 0 ? (
+      <div className="list-card">
+        <table className="list-table">
+          <thead>
             <tr>
-              <td colSpan="4" className="text-center">No se encontraron recetas.</td>
+              <th>Nombre</th>
+              <th>Estado</th>
+              <th>Ingredientes</th>
+              <th>Acciones</th>
             </tr>
-          ) : (
-            recetasFiltradas.map((receta) => (
-              <tr key={receta.id}>
-                <td>{receta.nombre}</td>
-                <td>
-                  {receta.activa ? (
-                    <Badge bg="success">Activa</Badge>
-                  ) : (
-                    <Badge bg="secondary">Inactiva</Badge>
-                  )}
-                </td>
-                <td>{receta.ingredientes.length} ingredientes</td>
-                <td>
-                  {/* Botones de acción para editar y eliminar */}
-                  <Link 
-                    to={`/recetas/editar/${receta.id}`} 
-                    className="btn btn-sm btn-warning me-2"
-                  >
-                    Editar
-                  </Link>
-                  <Button 
-                    variant="danger" 
-                    size="sm"
-                    onClick={() => handleEliminar(receta.id)}
-                  >
-                    Eliminar
-                  </Button>
-                </td>
+          </thead>
+          <tbody>
+            {recetasFiltradas.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={{ textAlign: 'center' }}>No se encontraron recetas.</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </Table>
+            ) : (
+              recetasFiltradas.map((receta) => (
+                <tr key={receta.id}>
+                  <td data-label="Nombre" style={{ fontWeight: 600 }}>{receta.nombre}</td>
+                  <td data-label="Estado">
+                    {receta.activa ? (
+                      <span className="ipv-badge ipv-badge-pos">Activa</span>
+                    ) : (
+                      <span className="ipv-badge ipv-badge-zero">Inactiva</span>
+                    )}
+                  </td>
+                  <td data-label="Ingredientes">
+                    {receta.ingredientes.length === 0 ? (
+                      <span className="ipv-badge ipv-badge-warn">Sin ingredientes</span>
+                    ) : (
+                      <span className="ipv-badge ipv-badge-zero">
+                        {receta.ingredientes.length} {receta.ingredientes.length === 1 ? 'ingrediente' : 'ingredientes'}
+                      </span>
+                    )}
+                  </td>
+                  <td data-label="">
+                    <Link
+                      to={`/recetas/editar/${receta.id}`}
+                      className="btn btn-outline-secondary btn-sm me-2 d-inline-flex align-items-center gap-1"
+                    >
+                      <PencilIcon size={13} /> Editar
+                    </Link>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      className="d-inline-flex align-items-center gap-1"
+                      onClick={() => handleEliminar(receta.id)}
+                    >
+                      <TrashIcon size={13} /> Eliminar
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       <Modal show={showHistory} onHide={handleCloseHistory}>
         <Modal.Header closeButton>

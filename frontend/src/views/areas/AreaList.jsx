@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Container, Alert, Spinner } from 'react-bootstrap';
+import { Button, Container, Alert, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 // Importación de la API de áreas
 import areaApi from '../../api/areaApi';
+import { PlusIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para mostrar la lista de áreas
 const AreaList = () => {
@@ -70,49 +71,54 @@ const AreaList = () => {
 
   // Renderiza la lista de áreas
   return (
-    <Container className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Áreas</h1>
-        <Link to="/areas/nuevo" className="btn btn-primary">
-          Nueva Área
+    <Container className="mt-4" style={{ maxWidth: '900px' }}>
+      <div className="page-header">
+        <div>
+          <h1>Áreas</h1>
+          <p>Las áreas agrupan qué productos aparecen en la hoja de IPV de cada una.</p>
+        </div>
+        <Link to="/areas/nuevo" className="btn btn-primary d-inline-flex align-items-center gap-2">
+          <PlusIcon size={15} /> Nueva Área
         </Link>
       </div>
 
       {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
 
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Código</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {areas.map((area) => (
-            <tr key={area.id}>
-              <td>{area.nombre}</td>
-              <td>{area.codigo || '-'}</td>
-              <td>
-                {/* Enlaces para editar y eliminar */}
-                <Link 
-                  to={`/areas/editar/${area.id}`} 
-                  className="btn btn-sm btn-warning me-2"
-                >
-                  Editar
-                </Link>
-                <Button 
-                  variant="danger" 
-                  size="sm"
-                  onClick={() => handleEliminar(area.id)}
-                >
-                  Eliminar
-                </Button>
-              </td>
+      <div className="list-card">
+        <table className="list-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Código</th>
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {areas.map((area) => (
+              <tr key={area.id}>
+                <td data-label="Nombre" style={{ fontWeight: 600 }}>{area.nombre}</td>
+                <td data-label="Código" style={{ color: 'var(--text-secondary)' }}>{area.codigo || '— sin código —'}</td>
+                <td data-label="">
+                  <Link
+                    to={`/areas/editar/${area.id}`}
+                    className="btn btn-outline-secondary btn-sm me-2 d-inline-flex align-items-center gap-1"
+                  >
+                    <PencilIcon size={13} /> Editar
+                  </Link>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    className="d-inline-flex align-items-center gap-1"
+                    onClick={() => handleEliminar(area.id)}
+                  >
+                    <TrashIcon size={13} /> Eliminar
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </Container>
   );
 };
