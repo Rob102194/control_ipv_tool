@@ -189,7 +189,7 @@ const ConsultarVentas = () => {
                 setVentas(updatedVentas.filter(v => v.fecha === fechaConsulta));
             } catch (err) {
                 console.error(err);
-                setError('Error al eliminar la venta');
+                setError(err.response?.data?.error || 'Error al eliminar la venta');
             }
         }
     };
@@ -219,7 +219,7 @@ const ConsultarVentas = () => {
                 setSelectedIds([]);
             } catch (err) {
                 console.error(err);
-                setError('Error al eliminar las ventas seleccionadas');
+                setError(err.response?.data?.error || 'Error al eliminar las ventas seleccionadas');
             }
         }
     };

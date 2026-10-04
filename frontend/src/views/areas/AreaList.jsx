@@ -42,7 +42,7 @@ const AreaList = () => {
         await areaApi.eliminar(id);
         cargarAreas(); // Recarga la lista después de eliminar
       } catch (err) {
-        setError('Error al eliminar el área');
+        setError(err.response?.data?.error || 'Error al eliminar el área');
         console.error(err);
       }
     }

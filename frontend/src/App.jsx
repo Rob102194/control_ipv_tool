@@ -1,7 +1,8 @@
 import React, { Suspense, lazy, useContext } from 'react';
 import { createBrowserRouter, RouterProvider, Link, Outlet, useLocation } from 'react-router-dom';
-import { Navbar, Nav, Container, Spinner, Button } from 'react-bootstrap';
+import { Navbar, Nav, Container, Spinner } from 'react-bootstrap';
 import { ThemeContext } from './contexts/ThemeContext';
+import { SunIcon, MoonIcon } from './components/icons';
 
 // Carga diferida de componentes de las vistas
 const ProductoList = lazy(() => import('./views/productos/ProductoList'));
@@ -45,9 +46,15 @@ const AppLayout = () => {
               <Nav.Link as={Link} to="/recetas" active={isActive('/recetas')}>Recetas</Nav.Link>
               <Nav.Link as={Link} to="/ventas" active={isActive('/ventas')}>Ventas</Nav.Link>
             </Nav>
-            <Button variant="outline-primary" onClick={toggleTheme}>
-              {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
-            </Button>
+            <button
+              type="button"
+              className="ipv-icon-btn"
+              onClick={toggleTheme}
+              aria-label={theme === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'}
+              title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
+            >
+              {theme === 'light' ? <MoonIcon size={17} /> : <SunIcon size={17} />}
+            </button>
           </Navbar.Collapse>
         </Container>
       </Navbar>
