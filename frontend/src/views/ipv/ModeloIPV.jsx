@@ -6,9 +6,11 @@ import 'react-bootstrap-typeahead/css/Typeahead.css';
 import ipvApi from '../../api/ipvApi';
 import * as productoApi from '../../api/productoApi';
 import areaApi from '../../api/areaApi';
+import { useToast } from '../../contexts/ToastContext';
 import { CheckIcon, TrashIcon, iconoDeArea } from '../../components/icons';
 
 const ModeloIPV = () => {
+    const showToast = useToast();
     const [areas, setAreas] = useState([]);
     const [productos, setProductos] = useState([]);
     const [modelos, setModelos] = useState({});
@@ -95,7 +97,7 @@ const ModeloIPV = () => {
                 area_id: selectedArea.id,
                 productos: modelos[selectedArea.id] || []
             });
-            alert('¡Modelo guardado con éxito!');
+            showToast('¡Modelo guardado con éxito!');
         } catch (err) {
             console.error(err);
             setSaveError('Error al guardar el modelo.');

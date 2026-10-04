@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button, Container, Alert, Spinner, Form, Row, Col } from 'react-bootstrap';
 import { getVentas, updateVenta, deleteVenta, importVentas, deleteVentas } from '../../api/ventaApi';
 import { formatDateLocal } from '../../utils/date';
+import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import { PencilIcon, TrashIcon, SearchIcon, CheckIcon } from '../../components/icons';
 
 // Componente principal para la gestión de ventas.
@@ -41,6 +43,7 @@ const VentaList = () => {
 
 // Componente para la importación de ventas.
 const ImportarVentas = () => {
+    const showToast = useToast();
     const [file, setFile] = useState(null);
     const [fecha, setFecha] = useState('');
     const [loading, setLoading] = useState(false);
@@ -50,7 +53,7 @@ const ImportarVentas = () => {
     // Maneja la importación del archivo de ventas.
     const handleImport = async () => {
         if (!file || !fecha) {
-            alert("Por favor, seleccione un archivo y una fecha.");
+            showToast('Por favor, seleccione un archivo y una fecha.', 'warning');
             return;
         }
         setLoading(true);
@@ -62,8 +65,7 @@ const ImportarVentas = () => {
             setFile(null);
             setFecha('');
         } catch (err) {
-            setError('Error al importar las ventas');
-            alert(err.response?.data?.error || "Error al importar ventas");
+            setError(err.response?.data?.error || 'Error al importar las ventas');
         } finally {
             setLoading(false);
         }
@@ -107,6 +109,7 @@ const ImportarVentas = () => {
 
 // Componente para consultar, editar y eliminar ventas.
 const ConsultarVentas = () => {
+    const confirmar = useConfirm();
     const [ventasOriginales, setVentasOriginales] = useState([]);
     const [ventas, setVentas] = useState([]);
     const [filtroNombre, setFiltroNombre] = useState('');
@@ -178,7 +181,7 @@ const ConsultarVentas = () => {
 
     // Elimina una venta individual.
     const handleDelete = async (id) => {
-        if (window.confirm('¿Estás seguro de eliminar esta venta?')) {
+        if (await confirmar('¿Estás seguro de eliminar esta venta?')) {
             try {
                 await deleteVenta(id);
                 const updatedVentas = ventasOriginales.filter(v => v.id !== id);
@@ -207,7 +210,7 @@ const ConsultarVentas = () => {
 
     // Elimina todas las ventas seleccionadas.
     const handleDeleteSelected = async () => {
-        if (window.confirm(`¿Estás seguro de eliminar ${selectedIds.length} ventas seleccionadas?`)) {
+        if (await confirmar(`¿Estás seguro de eliminar ${selectedIds.length} ventas seleccionadas?`)) {
             try {
                 await deleteVentas(selectedIds);
                 const updatedVentas = ventasOriginales.filter(v => !selectedIds.includes(v.id));

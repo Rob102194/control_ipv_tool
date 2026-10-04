@@ -5,6 +5,7 @@ import { useIPV } from '../../hooks/useIPV';
 import AreaIPVTab from './AreaIPVTab';
 import ReporteIPV from './ReporteIPV';
 import { formatDateEs } from '../../utils/date';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import {
     ArrowLeftIcon,
     DownloadIcon,
@@ -18,6 +19,7 @@ import {
 // Cada área se edita en su propia pestaña; el consumo y el final teórico
 // son calculados por el servidor y se muestran como solo lectura.
 function RegistroIPV() {
+    const confirmar = useConfirm();
     const { fecha } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -96,8 +98,8 @@ function RegistroIPV() {
         setDirty(false);
     };
 
-    const onLimpiar = () => {
-        if (window.confirm('Esto borrará los valores introducidos en todas las áreas para esta fecha (sin guardar). ¿Continuar?')) {
+    const onLimpiar = async () => {
+        if (await confirmar('Esto borrará los valores introducidos en todas las áreas para esta fecha (sin guardar). ¿Continuar?')) {
             handleLimpiarDatos();
             setDirty(true);
         }

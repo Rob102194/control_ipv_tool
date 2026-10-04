@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import ipvApi from '../api/ipvApi';
 import { obtenerProductos } from '../api/productoApi';
 import { formatDateLocal } from '../utils/date';
+import { useToast } from '../contexts/ToastContext';
 
 // Redondea a 3 decimales para el reporte: los valores crudos del inventario
 // (sobre todo el consumo calculado por el backend) pueden traer muchas
@@ -9,6 +10,7 @@ import { formatDateLocal } from '../utils/date';
 const fmt3 = (n) => (Number(n) || 0).toFixed(3);
 
 export const useIPV = () => {
+    const showToast = useToast();
     const [fecha, setFecha] = useState('');
     const [inventario, setInventario] = useState({});
     const [productos, setProductos] = useState([]);
@@ -87,7 +89,7 @@ export const useIPV = () => {
             const consumos = response.data;
 
             if (Object.keys(consumos).length === 0) {
-                alert('No se encontraron ventas para la fecha seleccionada. El consumo se mantendrá en cero.');
+                showToast('No se encontraron ventas para la fecha seleccionada. El consumo se mantendrá en cero.', 'warning');
             }
             
             setInventario(prevInventario => {
@@ -109,7 +111,7 @@ export const useIPV = () => {
         } finally {
             setLoading(false);
         }
-    }, [fecha]);
+    }, [fecha, showToast]);
 
     // El cálculo de final_teorico y diferencia lo hace el backend (única fuente
     // de verdad). Antes se recalculaba aquí, duplicando la regla del servidor.
@@ -174,13 +176,13 @@ export const useIPV = () => {
             });
 
             await ipvApi.guardar(dataToSave);
-            alert('¡Registro de inventario guardado con éxito!');
+            showToast('¡Registro de inventario guardado con éxito!');
         } catch (err) {
             setError('Error al guardar el registro.');
         } finally {
             setLoading(false);
         }
-    }, [inventario]);
+    }, [inventario, showToast]);
 
     const handleItemChange = useCallback((areaNombre, productoId, field, value) => {
         setInventario(prevInventario => {
@@ -247,12 +249,12 @@ export const useIPV = () => {
                 });
 
                 if (item.diferencia < 0) {
-                    reporte.resumen[areaNombre].faltantes.push(`${item.producto_nombre}: ${fmt3(Math.abs(item.diferencia))} ${um}`);
+                    reporte.resumen[areaNombre].faltantes.push({ producto: item.producto_nombre, cantidad: fmt3(Math.abs(item.diferencia)), um });
                 } else if (item.diferencia > 0) {
-                    reporte.resumen[areaNombre].sobrantes.push(`${item.producto_nombre}: ${fmt3(item.diferencia)} ${um}`);
+                    reporte.resumen[areaNombre].sobrantes.push({ producto: item.producto_nombre, cantidad: fmt3(item.diferencia), um });
                 }
                 if (item.merma > 0) {
-                    reporte.resumen[areaNombre].mermas.push(`${item.producto_nombre}: ${fmt3(item.merma)} ${um}`);
+                    reporte.resumen[areaNombre].mermas.push({ producto: item.producto_nombre, cantidad: fmt3(item.merma), um });
                 }
             });
         }

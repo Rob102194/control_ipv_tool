@@ -4,10 +4,12 @@ import { Link, useSearchParams } from 'react-router-dom';
 import recetaApi from '../../api/recetaApi';
 import { obtenerHistorial } from '../../api/historialApi';
 import { useScrollRestore } from '../../hooks/useScrollRestore';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import { DownloadIcon, UploadIcon, ClockIcon, PlusIcon, SearchIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para listar, gestionar e importar recetas
 const RecetaList = () => {
+  const confirmar = useConfirm();
   // Búsqueda, orden y filtro viven en la URL (no en useState): al entrar a
   // editar una receta y volver, React Router desmonta y remonta este
   // componente, y un useState perdería el filtro elegido. Con la URL como
@@ -70,7 +72,7 @@ const RecetaList = () => {
 
   // Maneja la eliminación de una receta
   const handleEliminar = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar esta receta?')) {
+    if (await confirmar('¿Estás seguro de eliminar esta receta?')) {
       try {
         await recetaApi.eliminar(id);
         cargarRecetas(); // Recarga la lista después de eliminar

@@ -5,10 +5,12 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { obtenerProductos, eliminarProducto, exportarProductos, importarProductos } from '../../api/productoApi';
 import { obtenerHistorial } from '../../api/historialApi';
 import { useScrollRestore } from '../../hooks/useScrollRestore';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import { DownloadIcon, UploadIcon, ClockIcon, PlusIcon, SearchIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para mostrar la lista de productos
 const ProductoList = () => {
+  const confirmar = useConfirm();
   // Búsqueda y orden viven en la URL (no en useState): al entrar a editar un
   // producto y volver, React Router desmonta y remonta este componente, y un
   // useState perdería el filtro elegido. Con la URL como fuente de verdad,
@@ -63,7 +65,7 @@ const ProductoList = () => {
   // Maneja la eliminación de un producto
   const handleEliminar = async (id) => {
     // Pide confirmación al usuario
-    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
+    if (await confirmar('¿Estás seguro de eliminar este producto?')) {
       try {
         await eliminarProducto(id);
         cargarProductos(); // Recarga la lista después de eliminar

@@ -3,10 +3,12 @@ import { Button, Container, Alert, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 // Importación de la API de áreas
 import areaApi from '../../api/areaApi';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import { PlusIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para mostrar la lista de áreas
 const AreaList = () => {
+  const confirmar = useConfirm();
   // Estados para manejar las áreas, la carga y los errores
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ const AreaList = () => {
   // Maneja la eliminación de un área
   const handleEliminar = async (id) => {
     // Pide confirmación al usuario
-    if (window.confirm('¿Estás seguro de eliminar esta área?')) {
+    if (await confirmar('¿Estás seguro de eliminar esta área?')) {
       try {
         await areaApi.eliminar(id);
         cargarAreas(); // Recarga la lista después de eliminar
