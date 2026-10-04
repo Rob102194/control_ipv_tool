@@ -13,6 +13,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -50,7 +52,16 @@ func main() {
 			Handler: app.Handler,
 		},
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "com.control-ipv.desktop",
+			// El candado de instancia única es un mutex/lock a nivel de
+			// sistema operativo (ver wails/v2 internal/frontend/desktop/*)
+			// identificado por este UniqueId. Si fuera un string fijo, dos
+			// negocios con bases de datos distintas (CONTROL_IPV_DATA_DIR)
+			// no podrían tener cada uno su propia ventana abierta a la vez:
+			// el segundo lanzamiento solo traería al frente al primero. Al
+			// derivarlo de la ruta de la BD, cada negocio tiene su propio
+			// candado (se puede abrir una vez cada uno en paralelo), pero
+			// abrir el MISMO negocio dos veces sigue bloqueado como antes.
+			UniqueId: "com.control-ipv.desktop." + hashCorto(app.DBPath),
 			OnSecondInstanceLaunch: func(options.SecondInstanceData) {
 				if ctxRef != nil {
 					wruntime.WindowUnminimise(ctxRef)
@@ -69,4 +80,12 @@ func main() {
 	if err != nil {
 		logger.Error("Wails terminó con error", "err", err)
 	}
+}
+
+// hashCorto reduce una ruta a un identificador corto y estable, apto para
+// nombrar un mutex/lock de sistema operativo (sin separadores de ruta ni
+// límite de longitud que preocupe).
+func hashCorto(s string) string {
+	suma := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(suma[:8])
 }
