@@ -101,7 +101,9 @@ const RecetaForm = () => {
         // Crea una nueva receta si no hay ID
         await recetaApi.crear(values);
       }
-      navigate('/recetas'); // Redirige a la lista de recetas
+      // navigate(-1) (no to('/recetas')) para volver exactamente a la URL de
+      // origen, con su búsqueda/orden/filtro tal como se dejaron.
+      navigate(-1);
     } catch (err) {
       // Muestra el mensaje de error específico del backend si está disponible
       const errorMessage = err.response?.data?.error || 'Error al guardar la receta';
@@ -221,6 +223,10 @@ const RecetaForm = () => {
                         const productoId = selected.length > 0 ? selected[0].id : '';
                         setFieldValue(`ingredientes.${index}.producto_id`, productoId);
                       }}
+                      // El menú se posiciona respecto al viewport (no al contenedor),
+                      // porque .ing-builder usa overflow:hidden para las esquinas
+                      // redondeadas y recortaría el desplegable al abrirse hacia abajo.
+                      positionFixed
                       placeholder="Escriba para buscar un producto..."
                       isInvalid={touched.ingredientes?.[index]?.producto_id && !!errors.ingredientes?.[index]?.producto_id}
                     />
@@ -287,7 +293,7 @@ const RecetaForm = () => {
             <div className="d-flex justify-content-end gap-2">
               <Button
                 variant="outline-secondary"
-                onClick={() => navigate('/recetas')}
+                onClick={() => navigate(-1)}
                 disabled={saving}
               >
                 Cancelar

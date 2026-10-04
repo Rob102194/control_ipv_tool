@@ -141,6 +141,7 @@ const ModeloIPV = () => {
                                     onChange={handleAddProducto}
                                     placeholder="Escriba para buscar y agregar un producto..."
                                     selected={[]}
+                                    positionFixed
                                 />
                             </Form.Group>
                             <Table striped bordered hover className="mt-3">

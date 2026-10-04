@@ -1,15 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Table, Button, Container, Alert, Spinner, Form, Modal } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import recetaApi from '../../api/recetaApi';
 import { obtenerHistorial } from '../../api/historialApi';
 import { DownloadIcon, UploadIcon, ClockIcon, PlusIcon, SearchIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para listar, gestionar e importar recetas
 const RecetaList = () => {
+  // Búsqueda, orden y filtro viven en la URL (no en useState): al entrar a
+  // editar una receta y volver, React Router desmonta y remonta este
+  // componente, y un useState perdería el filtro elegido. Con la URL como
+  // fuente de verdad, basta con que "Cancelar"/guardar en RecetaForm regrese
+  // con navigate(-1) para que se restaure tal cual se dejó.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filtro = searchParams.get('q') || '';
+  const sortBy = searchParams.get('sort') || 'nombre';
+  const filterBy = searchParams.get('filter') || '';
+
+  const actualizarParam = (clave, valor, porDefecto = '') => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (valor && valor !== porDefecto) next.set(clave, valor);
+      else next.delete(clave);
+      return next;
+    }, { replace: true });
+  };
+  const setFiltro = (valor) => actualizarParam('q', valor);
+  const setSortBy = (valor) => actualizarParam('sort', valor, 'nombre');
+  const setFilterBy = (valor) => actualizarParam('filter', valor);
+
   // Estados del componente
   const [recetas, setRecetas] = useState([]); // Almacena la lista de recetas
-  const [filtro, setFiltro] = useState(''); // Almacena el término de búsqueda
   const [loading, setLoading] = useState(true); // Indica si se están cargando los datos
   const [error, setError] = useState(''); // Almacena mensajes de error
   const [importing, setImporting] = useState(false); // Indica si hay una importación en curso
@@ -17,8 +38,6 @@ const RecetaList = () => {
   const fileInputRef = useRef(null); // Referencia al input de archivo para importación
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
-  const [sortBy, setSortBy] = useState('nombre');
-  const [filterBy, setFilterBy] = useState('');
 
   // Carga las recetas cuando el componente se monta
   useEffect(() => {

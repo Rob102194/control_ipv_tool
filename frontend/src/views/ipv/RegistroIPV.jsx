@@ -22,6 +22,7 @@ function RegistroIPV() {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const {
+        setFecha,
         inventario,
         loading,
         error,
@@ -34,6 +35,15 @@ function RegistroIPV() {
         handleCommentChange,
         buildReportData,
     } = useIPV();
+
+    // La fecha "oficial" de esta página es la de la URL (useParams), pero
+    // handleCalcularConsumo/buildReportData usan el estado interno `fecha`
+    // del hook, que nadie más pone al día aquí (a diferencia de IPVControl):
+    // sin este efecto queda vacío y "Calcular Consumo" siempre rechaza la
+    // fecha como si no se hubiera seleccionado ninguna.
+    useEffect(() => {
+        if (fecha) setFecha(fecha);
+    }, [fecha, setFecha]);
 
     const [dirty, setDirty] = useState(false);
     const areaFromUrl = searchParams.get('area');
