@@ -16,3 +16,12 @@ export function formatDateEs(fechaISO) {
     const date = new Date(y, m - 1, d);
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 }
+
+// Fecha de "ayer" (hoy - 1 día) en formato YYYY-MM-DD: el IPV se revisa a
+// día vencido (un día después de que ocurrió la venta), así que es el valor
+// por defecto natural al abrir Control IPV.
+export function formatDateAyer() {
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    return formatDateLocal(ayer);
+}

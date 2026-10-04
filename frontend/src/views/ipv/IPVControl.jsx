@@ -5,7 +5,7 @@ import { useIPV } from '../../hooks/useIPV';
 import ModeloIPV from './ModeloIPV';
 import IPVRegistrosList from './IPVRegistrosList';
 import ipvApi from '../../api/ipvApi';
-import { formatDateLocal, formatDateEs } from '../../utils/date';
+import { formatDateAyer, formatDateEs } from '../../utils/date';
 import { PlusIcon, ClockIcon, LayersIcon, iconoDeArea } from '../../components/icons';
 
 function IPVControl() {
@@ -17,9 +17,9 @@ function IPVControl() {
     const [registros, setRegistros] = useState([]);
     const [registrosLoading, setRegistrosLoading] = useState(true);
 
-    // Por defecto, la fecha de hoy.
+    // Por defecto, ayer: el IPV se revisa a día vencido.
     useEffect(() => {
-        if (!fecha) setFecha(formatDateLocal(new Date()));
+        if (!fecha) setFecha(formatDateAyer());
     }, [fecha, setFecha]);
 
     // Carga el estado de todas las áreas para la fecha elegida (para las

@@ -3,6 +3,11 @@ import ipvApi from '../api/ipvApi';
 import { obtenerProductos } from '../api/productoApi';
 import { formatDateLocal } from '../utils/date';
 
+// Redondea a 3 decimales para el reporte: los valores crudos del inventario
+// (sobre todo el consumo calculado por el backend) pueden traer muchas
+// cifras de coma flotante.
+const fmt3 = (n) => (Number(n) || 0).toFixed(3);
+
 export const useIPV = () => {
     const [fecha, setFecha] = useState('');
     const [inventario, setInventario] = useState({});
@@ -219,7 +224,7 @@ export const useIPV = () => {
                     if (!reporte.notas[areaNombre]) reporte.notas[areaNombre] = [];
                     for (const [campo, texto] of Object.entries(item.comentarios)) {
                         if (texto && texto.trim()) {
-                            const cantidad = item[campo] || 0;
+                            const cantidad = fmt3(item[campo]);
                             const nota = `${item.producto_nombre} ${cantidad} ${um} ${campo}: ${texto}`;
                             reporte.notas[areaNombre].push(nota);
                         }
@@ -230,24 +235,24 @@ export const useIPV = () => {
                     const itemAnterior = inventarioAnterior[areaNombre].find(p => p.producto_id === item.producto_id);
                     if (itemAnterior && item.inicio !== itemAnterior.final_fisico) {
                         if (!reporte.notas[areaNombre]) reporte.notas[areaNombre] = [];
-                        const diffNota = `Diferencia con cierre anterior para ${item.producto_nombre}: Inicio: ${item.inicio}, Cierre anterior: ${itemAnterior.final_fisico}`;
+                        const diffNota = `Diferencia con cierre anterior para ${item.producto_nombre}: Inicio: ${fmt3(item.inicio)}, Cierre anterior: ${fmt3(itemAnterior.final_fisico)}`;
                         reporte.notas[areaNombre].push(diffNota);
                     }
                 }
 
                 reporte.areas[areaNombre].push({
-                    producto: item.producto_nombre, um, inicio: item.inicio, entradas: item.entradas,
-                    consumo: item.consumo, merma: item.merma, otras_salidas: item.otras_salidas,
-                    final_teorico: item.final_teorico, final_fisico: item.final_fisico, diferencia: item.diferencia
+                    producto: item.producto_nombre, um, inicio: fmt3(item.inicio), entradas: fmt3(item.entradas),
+                    consumo: fmt3(item.consumo), merma: fmt3(item.merma), otras_salidas: fmt3(item.otras_salidas),
+                    final_teorico: fmt3(item.final_teorico), final_fisico: fmt3(item.final_fisico), diferencia: fmt3(item.diferencia)
                 });
 
                 if (item.diferencia < 0) {
-                    reporte.resumen[areaNombre].faltantes.push(`${item.producto_nombre}: ${Math.abs(item.diferencia)} ${um}`);
+                    reporte.resumen[areaNombre].faltantes.push(`${item.producto_nombre}: ${fmt3(Math.abs(item.diferencia))} ${um}`);
                 } else if (item.diferencia > 0) {
-                    reporte.resumen[areaNombre].sobrantes.push(`${item.producto_nombre}: ${item.diferencia} ${um}`);
+                    reporte.resumen[areaNombre].sobrantes.push(`${item.producto_nombre}: ${fmt3(item.diferencia)} ${um}`);
                 }
                 if (item.merma > 0) {
-                    reporte.resumen[areaNombre].mermas.push(`${item.producto_nombre}: ${item.merma} ${um}`);
+                    reporte.resumen[areaNombre].mermas.push(`${item.producto_nombre}: ${fmt3(item.merma)} ${um}`);
                 }
             });
         }
