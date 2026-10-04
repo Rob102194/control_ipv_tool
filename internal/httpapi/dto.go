@@ -348,6 +348,16 @@ type importVentasDTO struct {
 	Fecha         string `json:"fecha"`
 }
 
+// configuración del negocio
+
+type configuracionDTO struct {
+	NombreNegocio string `json:"nombre_negocio"`
+}
+
+func toConfiguracionDTO(c domain.Configuracion) configuracionDTO {
+	return configuracionDTO{NombreNegocio: c.NombreNegocio}
+}
+
 // modelo IPV
 type modeloInputDTO struct {
 	AreaID    string `json:"area_id" validate:"required"`

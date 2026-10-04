@@ -17,12 +17,13 @@ type Deps struct {
 
 // Services reúne todos los servicios de casos de uso. La capa HTTP recibe esto.
 type Services struct {
-	Productos *ProductoService
-	Areas     *AreaService
-	Recetas   *RecetaService
-	Ventas    *VentaService
-	IPV       *IPVService
-	Historial *HistorialService
+	Productos     *ProductoService
+	Areas         *AreaService
+	Recetas       *RecetaService
+	Ventas        *VentaService
+	IPV           *IPVService
+	Historial     *HistorialService
+	Configuracion *ConfiguracionService
 }
 
 // registrarCambio añade una entrada de historial usando la transacción en curso.
@@ -37,11 +38,12 @@ func (d Deps) registrarCambio(ctx context.Context, r ports.Repos, tipo domain.Ti
 // New construye todos los servicios a partir de las dependencias.
 func New(d Deps) *Services {
 	return &Services{
-		Productos: &ProductoService{d},
-		Areas:     &AreaService{d},
-		Recetas:   &RecetaService{d},
-		Ventas:    &VentaService{d},
-		IPV:       &IPVService{d},
-		Historial: &HistorialService{d},
+		Productos:     &ProductoService{d},
+		Areas:         &AreaService{d},
+		Recetas:       &RecetaService{d},
+		Ventas:        &VentaService{d},
+		IPV:           &IPVService{d},
+		Historial:     &HistorialService{d},
+		Configuracion: &ConfiguracionService{d},
 	}
 }

@@ -19,10 +19,11 @@ import (
 
 // App reúne lo necesario para servir la aplicación.
 type App struct {
-	Handler http.Handler
-	DB      *sql.DB
-	DBPath  string
-	Logger  *slog.Logger
+	Handler  http.Handler
+	DB       *sql.DB
+	DBPath   string
+	Logger   *slog.Logger
+	Services *usecases.Services
 }
 
 // Close libera los recursos (la conexión a la BD).
@@ -89,5 +90,5 @@ func NewWithOptions(cfg platform.Config, logger *slog.Logger, opts Options) (*Ap
 		AuthMiddleware: opts.AuthMiddleware,
 	})
 
-	return &App{Handler: router, DB: db, DBPath: dbPath, Logger: logger}, nil
+	return &App{Handler: router, DB: db, DBPath: dbPath, Logger: logger, Services: services}, nil
 }

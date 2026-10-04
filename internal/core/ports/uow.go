@@ -12,6 +12,7 @@ type Repos interface {
 	InventarioDiario() InventarioDiarioRepository
 	ModelosIPV() ModeloIPVRepository
 	Historial() HistorialRepository
+	Configuracion() ConfiguracionRepository
 }
 
 // UnitOfWork ejecuta una función dentro de una transacción: confirma si fn

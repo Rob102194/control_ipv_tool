@@ -115,3 +115,10 @@ type HistorialRepository interface {
 	Registrar(ctx context.Context, h domain.HistorialCambios) error
 	PorEntidad(ctx context.Context, tipo domain.TipoEntidad) ([]domain.HistorialCambios, error)
 }
+
+// ConfiguracionRepository persiste los ajustes del negocio (una sola fila:
+// cada base de datos es de un único negocio).
+type ConfiguracionRepository interface {
+	Obtener(ctx context.Context) (domain.Configuracion, error)
+	Guardar(ctx context.Context, c domain.Configuracion) error
+}

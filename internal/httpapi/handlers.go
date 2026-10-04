@@ -485,6 +485,30 @@ func (a *api) historialGet(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, out)
 }
 
+// ============================ Configuración ========================
+
+func (a *api) configuracionGet(w http.ResponseWriter, r *http.Request) {
+	c, err := a.svc.Configuracion.Obtener(r.Context())
+	if err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, toConfiguracionDTO(c))
+}
+
+func (a *api) configuracionUpdate(w http.ResponseWriter, r *http.Request) {
+	var in configuracionDTO
+	if !a.decode(w, r, &in) {
+		return
+	}
+	c, err := a.svc.Configuracion.Actualizar(r.Context(), in.NombreNegocio)
+	if err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, toConfiguracionDTO(c))
+}
+
 // ============================ helpers =============================
 
 func (a *api) fechaQuery(w http.ResponseWriter, r *http.Request) (domain.Date, bool) {

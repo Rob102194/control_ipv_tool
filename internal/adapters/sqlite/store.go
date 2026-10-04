@@ -28,6 +28,9 @@ func (r repoProvider) InventarioDiario() ports.InventarioDiarioRepository {
 }
 func (r repoProvider) ModelosIPV() ports.ModeloIPVRepository { return &modeloRepo{q: r.q} }
 func (r repoProvider) Historial() ports.HistorialRepository  { return &historialRepo{q: r.q} }
+func (r repoProvider) Configuracion() ports.ConfiguracionRepository {
+	return &configuracionRepo{q: r.q}
+}
 
 // Store es el adaptador de persistencia. Como ports.Repos opera sin transacción
 // (lecturas y escrituras sueltas); como ports.UnitOfWork agrupa varias

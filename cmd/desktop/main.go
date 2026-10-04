@@ -42,7 +42,7 @@ func main() {
 	var ctxRef context.Context
 
 	err = wails.Run(&options.App{
-		Title:     "Control IPV",
+		Title:     tituloVentana(app),
 		Width:     1280,
 		Height:    850,
 		MinWidth:  900,
@@ -88,4 +88,24 @@ func main() {
 func hashCorto(s string) string {
 	suma := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(suma[:8])
+}
+
+// tituloVentana arma "Control IPV" o "Control IPV — <negocio>" según el
+// ajuste guardado en la BD de este proceso. Importa sobre todo cuando hay
+// varias instancias abiertas a la vez (una por negocio, ver
+// SingleInstanceLock más abajo): sin esto, Windows/macOS muestran "Control
+// IPV" en la barra de tareas y el selector de ventanas para todas, sin forma
+// de distinguir cuál es cuál antes de hacer clic. Se lee una sola vez al
+// arrancar; si el usuario cambia el nombre desde la app, el título de la
+// ventana se actualiza recién al reabrirla.
+func tituloVentana(app *appboot.App) string {
+	const base = "Control IPV"
+	if app.Services == nil {
+		return base
+	}
+	cfg, err := app.Services.Configuracion.Obtener(context.Background())
+	if err != nil || cfg.NombreNegocio == "" {
+		return base
+	}
+	return base + " — " + cfg.NombreNegocio
 }

@@ -60,7 +60,7 @@ func TestMigrateCreatesSchema(t *testing.T) {
 	sort.Strings(got)
 
 	want := []string{
-		"areas", "grupos", "historial_cambios", "ingredientes", "inventario_diario",
+		"areas", "configuracion", "grupos", "historial_cambios", "ingredientes", "inventario_diario",
 		"modelo_ipv", "movimientos", "productos", "recetas", "ventas",
 	}
 	if len(got) != len(want) {

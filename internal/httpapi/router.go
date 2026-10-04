@@ -116,6 +116,10 @@ func mountAPI(r chi.Router, a *api) {
 
 	// Historial
 	reg("GET", "/historial/{entidad_tipo}", a.historialGet)
+
+	// Configuración del negocio (nuevo, sin paridad con la versión Python)
+	r.Get("/configuracion", a.configuracionGet)
+	r.Put("/configuracion", a.configuracionUpdate)
 }
 
 // healthHandler reporta el estado del proceso y verifica la BD.
