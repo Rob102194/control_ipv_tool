@@ -17,6 +17,12 @@ export const useIPV = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [inventarioAnterior, setInventarioAnterior] = useState(null);
+    // Si el día anterior NO tiene un registro guardado, /ipv/estado igual
+    // responde 200 con una plantilla (inicio arrastrado del último cierre
+    // real, pero final_fisico en 0 porque no hay cierre que poner). Sin esta
+    // bandera, esa plantilla se confundiría con un cierre real de 0 y
+    // generaría una falsa "Diferencia con cierre anterior" en el reporte.
+    const [diaAnteriorConRegistro, setDiaAnteriorConRegistro] = useState(false);
 
     useEffect(() => {
         const fetchProductos = async () => {
@@ -45,10 +51,14 @@ export const useIPV = () => {
         const fechaAnteriorString = formatDateLocal(fechaObj);
 
         try {
-            const [response, responseAnterior] = await Promise.all([
+            const [response, responseAnterior, responseRegistros] = await Promise.all([
                 ipvApi.getEstado(fechaACargar),
-                ipvApi.getEstado(fechaAnteriorString).catch(e => { console.error(e); return null; })
+                ipvApi.getEstado(fechaAnteriorString).catch(e => { console.error(e); return null; }),
+                ipvApi.getRegistros().catch(e => { console.error(e); return null; }),
             ]);
+            setDiaAnteriorConRegistro(
+                !!responseRegistros?.data?.some(r => r.fecha === fechaAnteriorString)
+            );
 
             const inventarioConComentariosParseados = response.data;
             for (const areaNombre in inventarioConComentariosParseados) {
@@ -233,7 +243,7 @@ export const useIPV = () => {
                     }
                 }
 
-                if (inventarioAnterior && inventarioAnterior[areaNombre]) {
+                if (diaAnteriorConRegistro && inventarioAnterior && inventarioAnterior[areaNombre]) {
                     const itemAnterior = inventarioAnterior[areaNombre].find(p => p.producto_id === item.producto_id);
                     if (itemAnterior && item.inicio !== itemAnterior.final_fisico) {
                         if (!reporte.notas[areaNombre]) reporte.notas[areaNombre] = [];
@@ -259,7 +269,7 @@ export const useIPV = () => {
             });
         }
         return reporte;
-    }, [inventario, inventarioAnterior, productos, fecha]);
+    }, [inventario, inventarioAnterior, diaAnteriorConRegistro, productos, fecha]);
 
     return {
         fecha,

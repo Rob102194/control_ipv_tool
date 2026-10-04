@@ -4,6 +4,7 @@ import { Spinner, Alert } from 'react-bootstrap';
 import { useIPV } from '../../hooks/useIPV';
 import AreaIPVTab from './AreaIPVTab';
 import ReporteIPV from './ReporteIPV';
+import ReportePreviewModal from './ReportePreviewModal';
 import { formatDateEs } from '../../utils/date';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import {
@@ -105,9 +106,17 @@ function RegistroIPV() {
         }
     };
 
+    const [showPreview, setShowPreview] = useState(false);
+    const [reportePreviewData, setReportePreviewData] = useState(null);
+
     const onGenerarReporte = () => {
-        const reporteData = buildReportData();
-        ReporteIPV(reporteData);
+        setReportePreviewData(buildReportData());
+        setShowPreview(true);
+    };
+
+    const onConfirmarExportar = (reporteDataFiltrado) => {
+        ReporteIPV(reporteDataFiltrado);
+        setShowPreview(false);
     };
 
     const AreaIcon = iconoDeArea(activeArea);
@@ -211,6 +220,13 @@ function RegistroIPV() {
                     </Alert>
                 )}
             </div>
+
+            <ReportePreviewModal
+                show={showPreview}
+                onHide={() => setShowPreview(false)}
+                reporteData={reportePreviewData}
+                onExportar={onConfirmarExportar}
+            />
         </div>
     );
 }
