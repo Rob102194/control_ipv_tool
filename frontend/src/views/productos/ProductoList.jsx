@@ -1,22 +1,44 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Table, Button, Container, Alert, Spinner, Form, Modal } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 // Importaciones de la API de productos
 import { obtenerProductos, eliminarProducto, exportarProductos, importarProductos } from '../../api/productoApi';
 import { obtenerHistorial } from '../../api/historialApi';
+import { useScrollRestore } from '../../hooks/useScrollRestore';
 import { DownloadIcon, UploadIcon, ClockIcon, PlusIcon, SearchIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para mostrar la lista de productos
 const ProductoList = () => {
+  // Búsqueda y orden viven en la URL (no en useState): al entrar a editar un
+  // producto y volver, React Router desmonta y remonta este componente, y un
+  // useState perdería el filtro elegido. Con la URL como fuente de verdad,
+  // basta con que "Cancelar"/guardar en ProductoForm regrese con
+  // navigate(-1) para que se restaure tal cual se dejó.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filtro = searchParams.get('q') || '';
+  const sortBy = searchParams.get('sort') || 'nombre';
+
+  const actualizarParam = (clave, valor, porDefecto = '') => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (valor && valor !== porDefecto) next.set(clave, valor);
+      else next.delete(clave);
+      return next;
+    }, { replace: true });
+  };
+  const setFiltro = (valor) => actualizarParam('q', valor);
+  const setSortBy = (valor) => actualizarParam('sort', valor, 'nombre');
+
   // Estados para manejar los productos, la carga y los errores
   const [productos, setProductos] = useState([]);
-  const [filtro, setFiltro] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [sortBy, setSortBy] = useState('nombre');
   const fileInputRef = useRef(null);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
+
+  // Restaura la posición de scroll al volver de editar un producto.
+  useScrollRestore('productos', !loading);
 
   // Carga los productos cuando el componente se monta
   useEffect(() => {

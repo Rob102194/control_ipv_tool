@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Container, Row, Col, ListGroup, Form, Alert, Spinner, Table } from 'react-bootstrap';
+import { Button, Row, Col, Form, Alert, Spinner } from 'react-bootstrap';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import ipvApi from '../../api/ipvApi';
 import * as productoApi from '../../api/productoApi';
 import areaApi from '../../api/areaApi';
+import { CheckIcon, TrashIcon, iconoDeArea } from '../../components/icons';
 
 const ModeloIPV = () => {
     const [areas, setAreas] = useState([]);
@@ -17,33 +18,35 @@ const ModeloIPV = () => {
     const [loadError, setLoadError] = useState('');
     const [saveError, setSaveError] = useState('');
 
-    useEffect(() => {
-        const cargarDatos = async () => {
-            try {
-                setLoading(true);
-                const [areasRes, productosRes, modelosRes] = await Promise.all([
-                    areaApi.obtenerTodos(),
-                    productoApi.obtenerProductos(),
-                    ipvApi.getModelos()
-                ]);
-                setAreas(areasRes.data);
-                setProductos(productosRes.data);
+    const cargarDatos = async () => {
+        try {
+            setLoading(true);
+            setLoadError('');
+            const [areasRes, productosRes, modelosRes] = await Promise.all([
+                areaApi.obtenerTodos(),
+                productoApi.obtenerProductos(),
+                ipvApi.getModelos()
+            ]);
+            setAreas(areasRes.data);
+            setProductos(productosRes.data);
 
-                const modelosConOrden = {};
-                for (const areaId in modelosRes.data) {
-                    modelosConOrden[areaId] = modelosRes.data[areaId].map(p => ({
-                        id: p.producto_id,
-                        orden: p.orden
-                    }));
-                }
-                setModelos(modelosConOrden);
-            } catch (err) {
-                console.error(err);
-                setLoadError('Error al cargar los datos iniciales.');
-            } finally {
-                setLoading(false);
+            const modelosConOrden = {};
+            for (const areaId in modelosRes.data) {
+                modelosConOrden[areaId] = modelosRes.data[areaId].map(p => ({
+                    id: p.producto_id,
+                    orden: p.orden
+                }));
             }
-        };
+            setModelos(modelosConOrden);
+        } catch (err) {
+            console.error(err);
+            setLoadError('Error al cargar los datos iniciales.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         cargarDatos();
     }, []);
 
@@ -101,8 +104,23 @@ const ModeloIPV = () => {
         }
     };
 
-    if (loading && !areas.length) return <Spinner animation="border" />;
-    if (loadError) return <Alert variant="danger">{loadError}</Alert>;
+    if (loading && !areas.length) {
+        return (
+            <div className="text-center py-4">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Cargando...</span>
+                </Spinner>
+            </div>
+        );
+    }
+    if (loadError) {
+        return (
+            <Alert variant="danger">
+                {loadError}{' '}
+                <Button variant="link" className="p-0 align-baseline" onClick={cargarDatos}>Reintentar</Button>
+            </Alert>
+        );
+    }
 
     const getProductoNombre = (productoId) => {
         const producto = productos.find(p => p.id === productoId);
@@ -110,41 +128,57 @@ const ModeloIPV = () => {
     };
 
     return (
-        <Container fluid>
-            <h3 className="my-4">Configurar Modelos de IPV por Área</h3>
-            <Row>
-                <Col md={4}>
-                    <h4>Áreas</h4>
-                    <ListGroup>
-                        {areas.map(area => (
-                            <ListGroup.Item 
-                                key={area.id} 
-                                action 
-                                active={selectedArea?.id === area.id}
+        <Row>
+            <Col md={4}>
+                <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, marginBottom: '12px' }}>Áreas</h2>
+                <div className="list-card">
+                    {areas.map(area => {
+                        const AreaIcon = iconoDeArea(area.nombre);
+                        const isActive = selectedArea?.id === area.id;
+                        return (
+                            <div
+                                key={area.id}
+                                className="list-row"
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => handleSelectArea(area)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectArea(area); }}
+                                style={{
+                                    cursor: 'pointer',
+                                    gap: '10px',
+                                    justifyContent: 'flex-start',
+                                    backgroundColor: isActive ? 'var(--color-primary-soft)' : undefined,
+                                    color: isActive ? 'var(--color-primary)' : undefined,
+                                    fontWeight: isActive ? 600 : undefined,
+                                }}
                             >
+                                <AreaIcon size={16} />
                                 {area.nombre}
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </Col>
-                <Col md={8}>
-                    {selectedArea ? (
-                        <div>
-                            <h4>Productos para {selectedArea.nombre}</h4>
-                            {saveError && <Alert variant="danger" onClose={() => setSaveError('')} dismissible>{saveError}</Alert>}
-                            <Form.Group>
-                                <Typeahead
-                                    id="producto-typeahead"
-                                    options={productos}
-                                    labelKey={option => `${option.nombre} (${option.unidad_medida})`}
-                                    onChange={handleAddProducto}
-                                    placeholder="Escriba para buscar y agregar un producto..."
-                                    selected={[]}
-                                    positionFixed
-                                />
-                            </Form.Group>
-                            <Table striped bordered hover className="mt-3">
+                            </div>
+                        );
+                    })}
+                </div>
+            </Col>
+            <Col md={8}>
+                {selectedArea ? (
+                    <div>
+                        <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, marginBottom: '12px' }}>
+                            Productos para {selectedArea.nombre}
+                        </h2>
+                        {saveError && <Alert variant="danger" onClose={() => setSaveError('')} dismissible>{saveError}</Alert>}
+                        <Form.Group>
+                            <Typeahead
+                                id="producto-typeahead"
+                                options={productos}
+                                labelKey={option => `${option.nombre} (${option.unidad_medida})`}
+                                onChange={handleAddProducto}
+                                placeholder="Escriba para buscar y agregar un producto..."
+                                selected={[]}
+                                positionFixed
+                            />
+                        </Form.Group>
+                        <div className="list-card mt-3">
+                            <table className="list-table">
                                 <thead>
                                     <tr>
                                         <th>Producto</th>
@@ -155,44 +189,67 @@ const ModeloIPV = () => {
                                     <Droppable droppableId="productos">
                                         {(provided) => (
                                             <tbody {...provided.droppableProps} ref={provided.innerRef}>
-                                                {(modelos[selectedArea.id] || []).sort((a, b) => a.orden - b.orden).map((producto, index) => (
-                                                    <Draggable key={`${selectedArea.id}-${producto.id}`} draggableId={`${selectedArea.id}-${producto.id}`} index={index}>
-                                                        {(provided) => (
-                                                            <tr
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                            >
-                                                                <td>{getProductoNombre(producto.id)}</td>
-                                                                <td>
-                                                                    <Button
-                                                                        variant="danger"
-                                                                        size="sm"
-                                                                        onClick={() => handleRemoveProducto(producto.id)}
-                                                                    >
-                                                                        Eliminar
-                                                                    </Button>
-                                                                </td>
-                                                            </tr>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
+                                                {(modelos[selectedArea.id] || []).length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="2" style={{ textAlign: 'center' }}>
+                                                            Todavía no hay productos en este modelo.
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    (modelos[selectedArea.id] || []).sort((a, b) => a.orden - b.orden).map((producto, index) => (
+                                                        <Draggable key={`${selectedArea.id}-${producto.id}`} draggableId={`${selectedArea.id}-${producto.id}`} index={index}>
+                                                            {(provided) => (
+                                                                <tr
+                                                                    ref={provided.innerRef}
+                                                                    {...provided.draggableProps}
+                                                                    {...provided.dragHandleProps}
+                                                                >
+                                                                    <td data-label="Producto" style={{ fontWeight: 600 }}>{getProductoNombre(producto.id)}</td>
+                                                                    <td data-label="">
+                                                                        <Button
+                                                                            variant="outline-danger"
+                                                                            size="sm"
+                                                                            className="d-inline-flex align-items-center gap-1"
+                                                                            onClick={() => handleRemoveProducto(producto.id)}
+                                                                        >
+                                                                            <TrashIcon size={13} /> Eliminar
+                                                                        </Button>
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </Draggable>
+                                                    ))
+                                                )}
                                                 {provided.placeholder}
                                             </tbody>
                                         )}
                                     </Droppable>
                                 </DragDropContext>
-                            </Table>
-                            <Button className="mt-3" onClick={handleSaveChanges} disabled={saving}>
-                                {saving ? 'Guardando...' : 'Guardar Cambios'}
-                            </Button>
+                            </table>
                         </div>
-                    ) : (
-                        <Alert variant="info">Seleccione un área para configurar su modelo.</Alert>
-                    )}
-                </Col>
-            </Row>
-        </Container>
+                        <Button
+                            variant="primary"
+                            className="mt-3 d-inline-flex align-items-center gap-2"
+                            onClick={handleSaveChanges}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <>
+                                    <Spinner animation="border" size="sm" />
+                                    Guardando...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckIcon size={15} /> Guardar Cambios
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                ) : (
+                    <Alert variant="info">Seleccione un área para configurar su modelo.</Alert>
+                )}
+            </Col>
+        </Row>
     );
 };
 

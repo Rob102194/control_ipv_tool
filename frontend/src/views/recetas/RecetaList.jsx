@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Table, Button, Container, Alert, Spinner, Form, Modal } from 'react-bootstrap';
-import { Link, useSearchParams, useLocation } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import recetaApi from '../../api/recetaApi';
 import { obtenerHistorial } from '../../api/historialApi';
+import { useScrollRestore } from '../../hooks/useScrollRestore';
 import { DownloadIcon, UploadIcon, ClockIcon, PlusIcon, SearchIcon, PencilIcon, TrashIcon } from '../../components/icons';
 
 // Componente para listar, gestionar e importar recetas
@@ -39,44 +40,9 @@ const RecetaList = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
 
-  // Restaura la posición de scroll al volver de editar una receta.
-  // `location.key` identifica esta entrada del historial (la misma al volver
-  // con "atrás"/navigate(-1), nueva en cada navegación fresca).
-  //
-  // No basta con leer window.scrollY en la limpieza del efecto al
-  // desmontar: para cuando React desmonta esta lista y monta RecetaForm, el
-  // documento ya se achicó (de 563 filas a un formulario corto) y el propio
-  // navegador ya recortó el scroll a 0 — se captura DEMASIADO TARDE. Por eso
-  // se guarda en cada scroll, mientras la lista sigue siendo la página
-  // completa.
-  const location = useLocation();
-  const scrollKey = 'recetas-scroll:' + location.key;
-  useEffect(() => {
-    let frame = null;
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        sessionStorage.setItem(scrollKey, String(window.scrollY));
-        frame = null;
-      });
-    };
-    window.addEventListener('scroll', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, [scrollKey]);
-  useEffect(() => {
-    if (loading) return;
-    const guardado = sessionStorage.getItem(scrollKey);
-    if (guardado) {
-      // behavior: 'instant' para evitar un scroll animado: el proyecto fija
-      // `scroll-behavior: smooth` a nivel global (Bootstrap), y con una
-      // lista de cientos de filas una animación "suave" tarda varios
-      // segundos en lugar de restaurar la posición al instante.
-      requestAnimationFrame(() => window.scrollTo({ top: parseInt(guardado, 10), behavior: 'instant' }));
-    }
-  }, [loading, scrollKey]);
+  // Restaura la posición de scroll al volver de editar una receta (ver
+  // hooks/useScrollRestore.js para el porqué del tracking continuo).
+  useScrollRestore('recetas', !loading);
 
   // Carga las recetas cuando el componente se monta
   useEffect(() => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Container, Alert, Spinner, Form, Row, Col } from 'react-bootstrap';
 import { getVentas, updateVenta, deleteVenta, importVentas, deleteVentas } from '../../api/ventaApi';
 import { formatDateLocal } from '../../utils/date';
-import { PencilIcon, TrashIcon, SearchIcon } from '../../components/icons';
+import { PencilIcon, TrashIcon, SearchIcon, CheckIcon } from '../../components/icons';
 
 // Componente principal para la gestión de ventas.
 const VentaList = () => {
@@ -314,7 +314,9 @@ const ConsultarVentas = () => {
                                             <td data-label="Cantidad"><Form.Control type="number" name="cantidad" value={editedData.cantidad} onChange={handleFieldChange} /></td>
                                             <td data-label="Fecha"><Form.Control type="date" name="fecha" value={editedData.fecha} onChange={handleFieldChange} /></td>
                                             <td data-label="">
-                                                <Button variant="primary" size="sm" className="me-2" onClick={() => handleSave(venta.id)}>Guardar</Button>
+                                                <Button variant="primary" size="sm" className="me-2 d-inline-flex align-items-center gap-1" onClick={() => handleSave(venta.id)}>
+                                                    <CheckIcon size={13} /> Guardar
+                                                </Button>
                                                 <Button variant="outline-secondary" size="sm" onClick={handleCancel}>Cancelar</Button>
                                             </td>
                                         </>

@@ -105,7 +105,9 @@ const ProductoForm = ({ onProductoCreado }) => {
       if (onProductoCreado) {
         onProductoCreado(); // Llama al callback si existe
       } else {
-        navigate('/productos'); // Redirige si no es un modal
+        // navigate(-1) (no to('/productos')) para volver exactamente a la
+        // URL de origen, con su búsqueda/orden tal como se dejaron.
+        navigate(-1);
       }
     } catch (err) {
       // Muestra el mensaje de error específico del backend si está disponible
@@ -185,7 +187,7 @@ const ProductoForm = ({ onProductoCreado }) => {
             {!onProductoCreado && (
               <Button
                 variant="outline-secondary"
-                onClick={() => navigate('/productos')}
+                onClick={() => navigate(-1)}
                 disabled={saving}
               >
                 Cancelar
