@@ -5,20 +5,44 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { obtenerProductoPorId, actualizarProducto, crearProducto } from '../../api/productoApi';
 import { CheckIcon } from '../../components/icons';
 
-// Lista de unidades de medida disponibles
+// Lista de unidades de medida disponibles. "unidades" es la etiqueta
+// canónica para ítems contables (bebidas, platos, etc.); "u" quedó
+// unificado en ella (eran dos etiquetas para lo mismo, ver migración
+// 00002_unifica_unidad_medida_unidades.sql).
 const unidadesMedida = [
-  'u',
+  'unidades',
   'kg',
   'l',
   'trago',
   'copa'
 ];
 
+// "u" ya no se ofrece como opción (unificado en "unidades"), pero se
+// traduce por si quedara algún valor así en datos no migrados.
+const unidadAliases = { u: 'unidades' };
+
+// Normaliza a minúsculas para que coincida con una opción del <select>: el
+// backend siempre devuelve la unidad en MAYÚSCULAS, así que sin esto el
+// valor cargado nunca calza con ninguna <option> (comparación sensible a
+// mayúsculas) y el desplegable queda mostrando la primera opción en vez del
+// valor real guardado.
+function normalizarUnidad(valor) {
+  const v = (valor || '').trim().toLowerCase();
+  return unidadAliases[v] || v;
+}
+
 // Componente de formulario para crear y editar productos
 const ProductoForm = ({ onProductoCreado }) => {
   // Hooks para navegación y parámetros de URL
   const navigate = useNavigate();
-  const { id } = useParams();
+  // useParams() toma los parámetros de la ruta que más cerca coincide en el
+  // árbol, aunque este componente esté embebido como modal (p. ej. el botón
+  // "Crear Producto" de RecetaForm en /recetas/editar/:id) — en ese caso
+  // devolvería el id de la RECETA, no de un producto. Cuando se usa como
+  // modal de creación rápida (onProductoCreado presente), ignoramos el
+  // parámetro de ruta: este formulario siempre crea, nunca edita.
+  const params = useParams();
+  const id = onProductoCreado ? undefined : params.id;
 
   // Estado para el producto, carga, guardado y errores
   const [producto, setProducto] = useState({
@@ -41,7 +65,10 @@ const ProductoForm = ({ onProductoCreado }) => {
     try {
       setLoading(true);
       const response = await obtenerProductoPorId(id);
-      setProducto(response.data);
+      setProducto({
+        ...response.data,
+        unidad_medida: normalizarUnidad(response.data.unidad_medida),
+      });
       setError('');
     } catch (err) {
       setError('Error al cargar el producto');
@@ -139,6 +166,12 @@ const ProductoForm = ({ onProductoCreado }) => {
               onChange={handleChange}
               required
             >
+              {/* Si el valor cargado no es ninguna opción conocida (otro alias
+                  legado no mapeado), se muestra igualmente en vez de
+                  reemplazarlo en silencio por la primera opción. */}
+              {!unidadesMedida.includes(producto.unidad_medida) && producto.unidad_medida && (
+                <option value={producto.unidad_medida}>{producto.unidad_medida} (desconocida)</option>
+              )}
               {unidadesMedida.map((um) => (
                 <option key={um} value={um}>
                   {um}

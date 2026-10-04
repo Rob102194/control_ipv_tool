@@ -33,7 +33,7 @@ CREATE TABLE historial_cambios (id VARCHAR(36) PRIMARY KEY, entidad_tipo VARCHAR
 CREATE TABLE alembic_version (version_num VARCHAR(32) PRIMARY KEY);
 INSERT INTO alembic_version VALUES ('65b880ef501d');
 INSERT INTO grupos VALUES ('g1','PRINCIPALES');
-INSERT INTO productos VALUES ('p1','ACEITE','L'),('p2','SAL','KG');
+INSERT INTO productos VALUES ('p1','ACEITE','L'),('p2','SAL','KG'),('p3','AGUA','U');
 INSERT INTO areas VALUES ('a1','COCINA','COC');
 INSERT INTO recetas VALUES ('r1','PASTA',1,'g1');
 INSERT INTO ingredientes VALUES ('i1','r1','p1','a1',0.05);
@@ -91,14 +91,16 @@ func TestImportLegacyYBaseline(t *testing.T) {
 		t.Errorf("el origen no debería haberse tocado: %v", err)
 	}
 
-	// goose sellado en la versión 1 sin recrear tablas.
+	// goose sella 00001 (esquema, ya existente) sin recrear tablas, y luego
+	// SÍ aplica 00002 (migración de datos: unifica unidad_medida "U" en
+	// "UNIDADES") con normalidad, igual que en una BD nueva.
 	var v int64
 	if err := app.DB.QueryRow(
 		"SELECT MAX(version_id) FROM goose_db_version WHERE is_applied = 1").Scan(&v); err != nil {
 		t.Fatalf("leyendo goose_db_version: %v", err)
 	}
-	if v != 1 {
-		t.Fatalf("versión de goose = %d, se esperaba 1", v)
+	if v != 2 {
+		t.Fatalf("versión de goose = %d, se esperaba 2", v)
 	}
 
 	// Los datos se conservan y fluyen por la API Go.
@@ -110,8 +112,17 @@ func TestImportLegacyYBaseline(t *testing.T) {
 	app.DB.QueryRow("SELECT COUNT(*) FROM productos").Scan(&nProd)
 	app.DB.QueryRow("SELECT COUNT(*) FROM ventas").Scan(&nVenta)
 	app.DB.QueryRow("SELECT COUNT(*) FROM inventario_diario").Scan(&nInv)
-	if nProd != 2 || nVenta != 1 || nInv != 1 {
+	if nProd != 3 || nVenta != 1 || nInv != 1 {
 		t.Fatalf("datos no conservados: productos=%d ventas=%d inventario=%d", nProd, nVenta, nInv)
+	}
+
+	// La migración 00002 unificó la unidad de medida del producto legado.
+	var unidadAgua string
+	if err := app.DB.QueryRow("SELECT unidad_medida FROM productos WHERE id='p3'").Scan(&unidadAgua); err != nil {
+		t.Fatalf("leyendo productos.unidad_medida: %v", err)
+	}
+	if unidadAgua != "UNIDADES" {
+		t.Errorf("productos.unidad_medida (p3) = %q, se esperaba 'UNIDADES'", unidadAgua)
 	}
 
 	// La columna grupo_id (que el código Go no usa) sigue intacta.
@@ -132,7 +143,7 @@ func TestImportLegacyYBaseline(t *testing.T) {
 	t.Cleanup(func() { _ = app2.Close() })
 	var v2 int64
 	app2.DB.QueryRow("SELECT MAX(version_id) FROM goose_db_version").Scan(&v2)
-	if v2 != 1 {
+	if v2 != 2 {
 		t.Fatalf("segunda pasada: versión = %d", v2)
 	}
 }
