@@ -1,14 +1,45 @@
 # Distribución de la app de escritorio
 
 Control IPV es multiplataforma: Windows, macOS y Linux, con el mismo código. Cada
-instalación es independiente y offline; los datos viven en una BD SQLite propia
-en el directorio de configuración del usuario:
+instalación es independiente y offline; por defecto los datos viven en una BD
+SQLite propia en el directorio de configuración del usuario:
 
 | SO | Ruta de datos |
 |----|---------------|
 | Windows | `%AppData%\ControlIPV\inventario.db` |
 | macOS | `~/Library/Application Support/ControlIPV/inventario.db` |
 | Linux | `~/.config/ControlIPV/inventario.db` |
+
+## Modo portable (varios negocios con la misma app)
+
+El `Control IPV.exe`/`Control IPV` "portable" que se publica junto al
+instalador en cada release (sin instalador de por medio) detecta en tiempo de
+arranque si puede escribir en su propia carpeta. Si puede, usa
+`<carpeta del ejecutable>/data/inventario.db` en vez de AppData/Config — cada
+copia que el usuario haga del ejecutable (una carpeta por negocio/restaurante)
+tiene así su propia base de datos, sin variables de entorno ni scripts.
+
+Esto se implementa en `internal/platform/portable.go`
+(`EnsurePortableDataDir`), cableado desde `cmd/desktop/main.go` **antes** de
+`appboot.New`, y solo si `CONTROL_IPV_DATA_DIR` no está fijada a mano. Nunca
+se activa para el `.exe` instalado por el instalador NSIS (vive en
+`Program Files`, de solo lectura para un usuario estándar) ni dentro de un
+`.app` de macOS — ahí sigue usando AppData/Config como siempre, porque:
+
+- escribir en `Program Files` sin ser administrador falla o Windows lo
+  redirige en silencio a una carpeta oculta por usuario (File System
+  Virtualization), y
+- el desinstalador de Windows borra `Program Files\...\Control IPV` entero
+  (`RMDir /r`) al desinstalar o reinstalar una actualización — si la BD
+  viviera ahí, se perdería.
+
+La detección prueba permiso de escritura real (crea y borra un fichero), no
+solo mira la ruta, así que es segura por construcción incluso si algún día
+cambia dónde vive el instalador.
+
+Para separar negocios con la app **instalada** (no la portable), sigue
+haciendo falta `CONTROL_IPV_DATA_DIR` por instancia (ver `docs/web-roadmap.md`
+para el multi-tenant real a futuro).
 
 ## Compilar
 

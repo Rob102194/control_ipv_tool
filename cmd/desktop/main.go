@@ -33,6 +33,25 @@ func main() {
 	}
 	logger := platform.SetupLogging(cfg.LogLevel, cfg.Env)
 
+	// Modo portable: si no se fijó CONTROL_IPV_DATA_DIR a mano y el
+	// ejecutable vive en una carpeta donde el usuario puede escribir (el
+	// caso real: el .exe "portable" que se publica junto al instalador, ver
+	// docs/distribucion.md), los datos van junto al ejecutable en vez de
+	// AppData/Config. Así, copiar el ejecutable a una carpeta por negocio
+	// basta para separar sus datos, sin variables de entorno ni scripts.
+	//
+	// Nunca se activa si el ejecutable está instalado en una ubicación de
+	// solo lectura para el usuario estándar (p. ej. Program Files, donde lo
+	// deja el instalador de Windows): ahí sigue usando AppData, igual que
+	// siempre — EnsurePortableDataDir prueba el permiso de escritura real
+	// antes de activarse, no asume nada por la ruta.
+	if cfg.DataDir == "" {
+		if dir, ok := platform.EnsurePortableDataDir(); ok {
+			logger.Info("modo portable: datos junto al ejecutable", "dir", dir)
+			cfg.DataDir = dir
+		}
+	}
+
 	app, err := appboot.New(cfg, logger, web.Handler())
 	if err != nil {
 		logger.Error("no se pudo iniciar la aplicación", "err", err)
