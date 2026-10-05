@@ -386,6 +386,11 @@ body {
 }
 .search-wrap input { padding-left: 34px !important; }
 
+/* react-bootstrap-typeahead 6 está pensado para Bootstrap 4: su botón de
+   limpiar lleva un "×" de texto, pero en Bootstrap 5 `.btn-close` ya dibuja
+   la cruz con un fondo, y salían dos. Se oculta la de texto. */
+.rbt-aux .rbt-close .rbt-close-content { display: none; }
+
 .filter-chip {
   display: inline-flex;
   align-items: center;

@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Table, Button, Container, Alert, Spinner, Form, Modal } from 'react-bootstrap';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Typeahead } from 'react-bootstrap-typeahead';
+import 'react-bootstrap-typeahead/css/Typeahead.css';
 import recetaApi from '../../api/recetaApi';
+import * as productoApi from '../../api/productoApi';
 import { obtenerHistorial } from '../../api/historialApi';
 import { useScrollRestore } from '../../hooks/useScrollRestore';
 import { useConfirm } from '../../contexts/ConfirmContext';
@@ -19,6 +22,7 @@ const RecetaList = () => {
   const filtro = searchParams.get('q') || '';
   const sortBy = searchParams.get('sort') || 'nombre';
   const filterBy = searchParams.get('filter') || '';
+  const productoFiltroId = searchParams.get('producto') || '';
 
   const actualizarParam = (clave, valor, porDefecto = '') => {
     setSearchParams(prev => {
@@ -31,9 +35,11 @@ const RecetaList = () => {
   const setFiltro = (valor) => actualizarParam('q', valor);
   const setSortBy = (valor) => actualizarParam('sort', valor, 'nombre');
   const setFilterBy = (valor) => actualizarParam('filter', valor);
+  const setProductoFiltroId = (valor) => actualizarParam('producto', valor);
 
   // Estados del componente
   const [recetas, setRecetas] = useState([]); // Almacena la lista de recetas
+  const [productos, setProductos] = useState([]); // Productos, para resolver el nombre de cada ingrediente
   const [loading, setLoading] = useState(true); // Indica si se están cargando los datos
   const [error, setError] = useState(''); // Almacena mensajes de error
   const [importing, setImporting] = useState(false); // Indica si hay una importación en curso
@@ -45,6 +51,14 @@ const RecetaList = () => {
   // Restaura la posición de scroll al volver de editar una receta (ver
   // hooks/useScrollRestore.js para el porqué del tracking continuo).
   useScrollRestore('recetas', !loading);
+
+  // Catálogo para el selector de "filtrar por producto". Si falla, el selector
+  // queda vacío (el resto de la vista sigue funcionando).
+  useEffect(() => {
+    productoApi.obtenerProductos()
+      .then(res => setProductos(res.data))
+      .catch(err => console.error(err));
+  }, []);
 
   // Carga las recetas cuando el componente se monta
   useEffect(() => {
@@ -145,8 +159,10 @@ const RecetaList = () => {
   };
 
   // Filtra las recetas basándose en el término de búsqueda
+  // y, si se eligió un producto, por las que lo usan como ingrediente
   const recetasFiltradas = recetas.filter(receta =>
-    receta.nombre.toLowerCase().includes(filtro.toLowerCase())
+    receta.nombre.toLowerCase().includes(filtro.toLowerCase()) &&
+    (!productoFiltroId || receta.ingredientes.some(ing => ing.producto_id === productoFiltroId))
   );
 
   // Maneja el cambio en el input de archivo y procesa la importación
@@ -227,6 +243,20 @@ const RecetaList = () => {
             placeholder="Buscar receta por nombre..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
+          />
+        </div>
+        <div className="search-wrap" style={{ flex: 1 }}>
+          <span className="search-icon" style={{ zIndex: 1 }}><SearchIcon size={15} /></span>
+          <Typeahead
+            id="filtro-producto"
+            options={productos}
+            labelKey={option => `${option.nombre} (${option.unidad_medida})`}
+            selected={productos.filter(p => p.id === productoFiltroId)}
+            onChange={(selected) => setProductoFiltroId(selected.length > 0 ? selected[0].id : '')}
+            positionFixed
+            clearButton
+            placeholder="Filtrar por producto (ingrediente)..."
+            emptyLabel="No se encontraron productos"
           />
         </div>
         <Form.Select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ width: '200px' }}>
