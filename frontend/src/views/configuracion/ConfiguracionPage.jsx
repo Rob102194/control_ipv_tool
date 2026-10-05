@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import { useRestoreLock } from '../../contexts/RestoreLockContext';
 import { formatDateTimeEs } from '../../utils/date';
-import { CheckIcon, ArchiveIcon, DownloadIcon, RefreshIcon, PlusIcon, FolderIcon } from '../../components/icons';
+import { CheckIcon, ArchiveIcon, DownloadIcon, RefreshIcon, PlusIcon, FolderIcon, ChevronDownIcon } from '../../components/icons';
 
 function formatearTamano(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -36,6 +36,7 @@ const ConfiguracionPage = () => {
   const [cargandoBackups, setCargandoBackups] = useState(true);
   const [creandoBackup, setCreandoBackup] = useState(false);
   const [restaurando, setRestaurando] = useState(null); // nombre del backup en curso, o null
+  const [mostrarBackups, setMostrarBackups] = useState(false);
 
   const cargarConfiguracion = async () => {
     try {
@@ -92,8 +93,15 @@ const ConfiguracionPage = () => {
     try {
       const { data } = await backupApi.elegirCarpeta();
       // El usuario puede cancelar el diálogo nativo: el backend devuelve
-      // path vacío (no es un error), así que simplemente no tocamos el campo.
-      if (data.path) setBackupDir(data.path);
+      // path vacío (no es un error), así que simplemente no tocamos nada.
+      if (!data.path) return;
+      setBackupDir(data.path);
+      // A diferencia de escribir la ruta a mano, elegirla con el diálogo es
+      // una selección deliberada y completa (nunca un valor a medio
+      // escribir) — se guarda de inmediato para que "Backup ahora" la use
+      // ya mismo, sin depender de que el usuario pulse "Guardar" aparte.
+      await configuracionApi.actualizarBackupDir(data.path);
+      showToast('Carpeta de backups actualizada.');
     } catch (err) {
       if (err.response?.status === 404) {
         showToast('El selector de carpetas no está disponible en este modo; escribe la ruta a mano.', 'danger');
@@ -262,55 +270,77 @@ const ConfiguracionPage = () => {
         </Button>
       </div>
 
-      <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, marginBottom: '12px' }}>Backups disponibles</h2>
-      {cargandoBackups ? (
-        <div className="text-center py-4">
-          <Spinner animation="border" size="sm" />
-        </div>
-      ) : backups.length === 0 ? (
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-          Todavía no hay backups. Usa "Backup ahora" para crear el primero.
-        </p>
-      ) : (
-        <div className="list-card">
-          <table className="list-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Tamaño</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {backups.map((b) => (
-                <tr key={b.nombre}>
-                  <td data-label="Fecha" style={{ fontWeight: 600 }}>{formatDateTimeEs(b.creado_en)}</td>
-                  <td data-label="Tamaño" style={{ color: 'var(--text-secondary)' }}>{formatearTamano(b.tamano_bytes)}</td>
-                  <td data-label="">
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      className="me-2 d-inline-flex align-items-center gap-1"
-                      onClick={() => descargarBackup(b.nombre)}
-                    >
-                      <DownloadIcon size={13} /> Descargar
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      className="d-inline-flex align-items-center gap-1"
-                      onClick={() => restaurarBackup(b.nombre)}
-                      disabled={restaurando !== null}
-                    >
-                      {restaurando === b.nombre ? <Spinner animation="border" size="sm" /> : <RefreshIcon size={13} />}
-                      Restaurar
-                    </Button>
-                  </td>
+      <button
+        type="button"
+        onClick={() => setMostrarBackups((v) => !v)}
+        className="d-flex align-items-center gap-2 w-100 bg-transparent border-0 p-0 mb-2"
+        style={{ cursor: 'pointer' }}
+        aria-expanded={mostrarBackups}
+      >
+        <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0 }}>
+          Backups disponibles{!cargandoBackups && ` (${backups.length})`}
+        </h2>
+        <span
+          className="d-inline-flex"
+          style={{
+            transition: 'transform 0.15s ease',
+            transform: mostrarBackups ? 'rotate(180deg)' : 'none',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <ChevronDownIcon size={16} />
+        </span>
+      </button>
+      {mostrarBackups && (
+        cargandoBackups ? (
+          <div className="text-center py-4">
+            <Spinner animation="border" size="sm" />
+          </div>
+        ) : backups.length === 0 ? (
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+            Todavía no hay backups. Usa "Backup ahora" para crear el primero.
+          </p>
+        ) : (
+          <div className="list-card">
+            <table className="list-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tamaño</th>
+                  <th>Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {backups.map((b) => (
+                  <tr key={b.nombre}>
+                    <td data-label="Fecha" style={{ fontWeight: 600 }}>{formatDateTimeEs(b.creado_en)}</td>
+                    <td data-label="Tamaño" style={{ color: 'var(--text-secondary)' }}>{formatearTamano(b.tamano_bytes)}</td>
+                    <td data-label="">
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        className="me-2 d-inline-flex align-items-center gap-1"
+                        onClick={() => descargarBackup(b.nombre)}
+                      >
+                        <DownloadIcon size={13} /> Descargar
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        className="d-inline-flex align-items-center gap-1"
+                        onClick={() => restaurarBackup(b.nombre)}
+                        disabled={restaurando !== null}
+                      >
+                        {restaurando === b.nombre ? <Spinner animation="border" size="sm" /> : <RefreshIcon size={13} />}
+                        Restaurar
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
     </Container>
   );
