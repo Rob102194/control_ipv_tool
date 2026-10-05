@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -24,9 +25,10 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 
 // api agrupa los handlers HTTP sobre los servicios de casos de uso.
 type api struct {
-	svc     *usecases.Services
-	logger  *slog.Logger
-	backups BackupManager
+	svc        *usecases.Services
+	logger     *slog.Logger
+	backups    BackupManager
+	pickFolder func(ctx context.Context) (string, error)
 }
 
 func (a *api) fail(w http.ResponseWriter, r *http.Request, err error) {

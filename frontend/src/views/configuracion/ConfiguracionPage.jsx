@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import { useRestoreLock } from '../../contexts/RestoreLockContext';
 import { formatDateTimeEs } from '../../utils/date';
-import { CheckIcon, ArchiveIcon, DownloadIcon, RefreshIcon, PlusIcon } from '../../components/icons';
+import { CheckIcon, ArchiveIcon, DownloadIcon, RefreshIcon, PlusIcon, FolderIcon } from '../../components/icons';
 
 function formatearTamano(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -30,6 +30,7 @@ const ConfiguracionPage = () => {
 
   const [backupDir, setBackupDir] = useState('');
   const [guardandoBackupDir, setGuardandoBackupDir] = useState(false);
+  const [eligiendoCarpeta, setEligiendoCarpeta] = useState(false);
 
   const [backups, setBackups] = useState([]);
   const [cargandoBackups, setCargandoBackups] = useState(true);
@@ -83,6 +84,24 @@ const ConfiguracionPage = () => {
       showToast(err.response?.data?.error || 'Error al guardar el nombre.', 'danger');
     } finally {
       setGuardandoNombre(false);
+    }
+  };
+
+  const elegirCarpeta = async () => {
+    setEligiendoCarpeta(true);
+    try {
+      const { data } = await backupApi.elegirCarpeta();
+      // El usuario puede cancelar el diálogo nativo: el backend devuelve
+      // path vacío (no es un error), así que simplemente no tocamos el campo.
+      if (data.path) setBackupDir(data.path);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        showToast('El selector de carpetas no está disponible en este modo; escribe la ruta a mano.', 'danger');
+      } else {
+        showToast(err.response?.data?.error || 'Error al abrir el selector de carpetas.', 'danger');
+      }
+    } finally {
+      setEligiendoCarpeta(false);
     }
   };
 
@@ -210,12 +229,23 @@ const ConfiguracionPage = () => {
         </h2>
         <Form.Group className="mb-3">
           <Form.Label className="fw-semibold">Ruta</Form.Label>
-          <Form.Control
-            type="text"
-            value={backupDir}
-            onChange={(e) => setBackupDir(e.target.value)}
-            placeholder="Dejar en blanco para usar la carpeta por defecto"
-          />
+          <div className="d-flex gap-2">
+            <Form.Control
+              type="text"
+              value={backupDir}
+              onChange={(e) => setBackupDir(e.target.value)}
+              placeholder="Dejar en blanco para usar la carpeta por defecto"
+            />
+            <Button
+              variant="outline-secondary"
+              onClick={elegirCarpeta}
+              disabled={eligiendoCarpeta}
+              className="d-inline-flex align-items-center gap-2 flex-shrink-0"
+            >
+              {eligiendoCarpeta ? <Spinner animation="border" size="sm" /> : <FolderIcon size={15} />}
+              Elegir carpeta…
+            </Button>
+          </div>
           <Form.Text style={{ color: 'var(--text-secondary)' }}>
             Por defecto se guardan junto a la base de datos. Puedes apuntarla a una carpeta ya sincronizada por
             Dropbox, Google Drive o similar, para tener una copia fuera de esta máquina.

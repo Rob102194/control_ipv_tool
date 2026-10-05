@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/Rob102194/control_ipv_tool/internal/core/domain"
 	"github.com/Rob102194/control_ipv_tool/internal/platform"
 )
 
@@ -68,6 +69,22 @@ func (a *api) backupsDownload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, nombre))
 	http.ServeFile(w, r, ruta)
+}
+
+// backupsPickFolder abre el selector nativo de carpetas (solo disponible en
+// escritorio, ver httpapi.Deps.PickFolder). En el servidor web pickFolder es
+// nil: el frontend sigue ofreciendo escribir la ruta a mano.
+func (a *api) backupsPickFolder(w http.ResponseWriter, r *http.Request) {
+	if a.pickFolder == nil {
+		a.fail(w, r, domain.NotFoundf("elegir carpeta con un selector no está disponible en este modo; escribe la ruta a mano"))
+		return
+	}
+	dir, err := a.pickFolder(r.Context())
+	if err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"path": dir})
 }
 
 func (a *api) backupsRestore(w http.ResponseWriter, r *http.Request) {

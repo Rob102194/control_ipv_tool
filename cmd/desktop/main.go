@@ -15,6 +15,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -52,13 +53,28 @@ func main() {
 		}
 	}
 
-	app, err := appboot.New(cfg, logger, web.Handler())
+	// ctxRef se captura en OnStartup (es el contexto real de Wails, el único
+	// que acepta wruntime.OpenDirectoryDialog). Se declara antes de
+	// appboot.New para que la clausura de ElegirCarpeta pueda cerrarla por
+	// referencia: appboot no sabe nada de Wails, solo invoca esta función.
+	var ctxRef context.Context
+
+	app, err := appboot.NewWithOptions(cfg, logger, appboot.Options{
+		SPA: web.Handler(),
+		ElegirCarpeta: func(ctx context.Context) (string, error) {
+			if ctxRef == nil {
+				return "", fmt.Errorf("la ventana de la aplicación todavía no está lista")
+			}
+			return wruntime.OpenDirectoryDialog(ctxRef, wruntime.OpenDialogOptions{
+				Title:                "Elegir carpeta de backups",
+				CanCreateDirectories: true,
+			})
+		},
+	})
 	if err != nil {
 		logger.Error("no se pudo iniciar la aplicación", "err", err)
 		return
 	}
-
-	var ctxRef context.Context
 
 	err = wails.Run(&options.App{
 		Title:     tituloVentana(app),

@@ -195,6 +195,10 @@ export const RefreshIcon = makeIcon(
   </>
 );
 
+export const FolderIcon = makeIcon(
+  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+);
+
 // Mapea el nombre de un área a un icono representativo, con un icono por
 // defecto para áreas cuyo nombre no reconocemos (son datos del usuario).
 export function iconoDeArea(nombreArea) {

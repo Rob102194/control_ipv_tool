@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"net/http"
@@ -29,6 +30,11 @@ type Deps struct {
 	AuthMiddleware func(http.Handler) http.Handler
 	// Backups habilita /api/backups (crear/listar/descargar/restaurar).
 	Backups BackupManager
+	// PickFolder, si se indica, habilita POST /api/backups/elegir-carpeta
+	// (selector nativo de carpetas, solo disponible en escritorio). nil en
+	// servidor web: el handler responde que no está disponible, y el
+	// frontend sigue ofreciendo escribir la ruta a mano como alternativa.
+	PickFolder func(ctx context.Context) (string, error)
 }
 
 // NewRouter arma el http.Handler de la aplicación: middleware transversal, el
@@ -45,7 +51,7 @@ func NewRouter(d Deps) http.Handler {
 	r.Get("/healthz", healthHandler(d))
 
 	if d.Services != nil {
-		a := &api{svc: d.Services, logger: d.Logger, backups: d.Backups}
+		a := &api{svc: d.Services, logger: d.Logger, backups: d.Backups, pickFolder: d.PickFolder}
 		r.Route("/api", func(r chi.Router) {
 			if d.AuthMiddleware != nil {
 				r.Use(d.AuthMiddleware)
@@ -126,6 +132,7 @@ func mountAPI(r chi.Router, a *api) {
 	// Backups (nuevo, sin paridad con la versión Python)
 	r.Get("/backups", a.backupsList)
 	r.Post("/backups", a.backupsCreate)
+	r.Post("/backups/elegir-carpeta", a.backupsPickFolder)
 	r.Get("/backups/{nombre}/download", a.backupsDownload)
 	r.Post("/backups/{nombre}/restore", a.backupsRestore)
 }

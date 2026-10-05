@@ -40,6 +40,12 @@ type Options struct {
 	SPA http.Handler
 	// AuthMiddleware envuelve /api (nil en escritorio). Ver docs/web-roadmap.md.
 	AuthMiddleware func(http.Handler) http.Handler
+	// ElegirCarpeta abre un selector nativo de carpetas (solo tiene sentido en
+	// escritorio, vía el runtime de Wails; nil en el servidor web — no hay
+	// forma de que un navegador elija una carpeta del disco del SERVIDOR).
+	// cmd/desktop la cablea; devuelve ("", nil) si el usuario cancela el
+	// diálogo. Ver httpapi.Deps.PickFolder.
+	ElegirCarpeta func(ctx context.Context) (string, error)
 }
 
 // New construye la App: resuelve el directorio de datos, importa la BD legada si
@@ -91,6 +97,7 @@ func NewWithOptions(cfg platform.Config, logger *slog.Logger, opts Options) (*Ap
 		SPA:            opts.SPA,
 		AuthMiddleware: opts.AuthMiddleware,
 		Backups:        bm,
+		PickFolder:     opts.ElegirCarpeta,
 	})
 
 	return &App{Handler: router, DB: db, DBPath: dbPath, Logger: logger, Services: services}, nil
