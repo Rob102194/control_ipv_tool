@@ -87,6 +87,33 @@ de extensión para multiusuario/auth es `appboot.Options.AuthMiddleware` (hoy
 `nil` en escritorio) — ver `docs/web-roadmap.md` para lo que falta (auth,
 `negocio_id`, adaptador Postgres, bloqueo optimista).
 
+### Capacidades opcionales (escritorio vs. web)
+
+Varios campos de `appboot.Options`/`httpapi.Deps` son `nil` en un despliegue
+y están cableados en el otro, siguiendo siempre el mismo patrón que
+`AuthMiddleware`: el handler HTTP comprueba el nil y responde con un error de
+dominio explicando que la función no está disponible en ese modo (nunca un
+panic ni un fallo silencioso). Hoy hay tres:
+
+- `AuthMiddleware` — nil en escritorio, pendiente en web (ver
+  `docs/web-roadmap.md`).
+- `Backups` (`httpapi.BackupManager`) — backups manuales de la BD (`VACUUM
+  INTO`, retención de 7, carpeta configurable), cableado para ambos
+  despliegues en `internal/appboot/backup.go`.
+- `PickFolder` (`appboot.Options.ElegirCarpeta`) — selector nativo de
+  carpetas vía `wruntime.OpenDirectoryDialog`; solo tiene sentido en
+  escritorio (un navegador no puede elegir una carpeta del disco del
+  *servidor*). `cmd/desktop` lo cablea capturando el contexto real de Wails
+  en `OnStartup`; en `cmd/server` queda `nil` y el frontend muestra el campo
+  de texto manual como alternativa.
+
+La página `/configuracion` del frontend es el único lugar pensado para vivir
+todos los ajustes de la app (hoy: nombre del negocio, carpeta de backups) —
+cualquier ajuste nuevo debería sumarse ahí en vez de repartirse por la
+interfaz. Ver `docs/distribucion.md` para el detalle de backups y modo
+portable, y multi-instancia (`SingleInstanceLock` por datadir, para correr
+varios negocios a la vez).
+
 ### Contrato de repositorios (`internal/core/ports`)
 
 - Todo método recibe `context.Context` como primer parámetro.

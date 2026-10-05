@@ -12,6 +12,7 @@ escritorio y web es el envoltorio en `cmd/`:
 | Frontend | SPA embebido (`web/embed.go`) | SPA embebido **o** CDN estático |
 | BD | SQLite en el datadir del usuario | SQLite en disco **o** (futuro) Postgres |
 | Auth | ninguna (monousuario) | `Deps.AuthMiddleware` (hoy nil) |
+| Selector de carpeta (backups) | diálogo nativo del SO (`Options.ElegirCarpeta`) | no existe; el usuario escribe la ruta a mano |
 
 El frontend ya llama a `/api` **relativo**, así que sirve igual en los dos
 sitios sin cambios. Para móvil: el SPA es responsive → PWA, o envolverlo con

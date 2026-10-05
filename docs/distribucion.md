@@ -41,6 +41,44 @@ Para separar negocios con la app **instalada** (no la portable), sigue
 haciendo falta `CONTROL_IPV_DATA_DIR` por instancia (ver `docs/web-roadmap.md`
 para el multi-tenant real a futuro).
 
+## Varias instancias en paralelo (multi-negocio)
+
+Cada ventana de escritorio es un proceso independiente con su propia BD. El
+candado de instancia única de Wails (`SingleInstanceLock`, en
+`cmd/desktop/main.go`) identifica el proceso con un hash corto de la ruta de
+la BD en vez de un id fijo: así, dos negocios con datadirs distintos (uno
+portable y otro no, o dos con `CONTROL_IPV_DATA_DIR` diferentes) pueden tener
+cada uno su ventana abierta a la vez. Abrir el **mismo** negocio dos veces
+sigue bloqueado como siempre (el segundo lanzamiento trae al frente la
+ventana existente, no abre una nueva).
+
+Para distinguir de un vistazo qué ventana corresponde a qué negocio cuando
+hay varias abiertas, el nombre del negocio (editable en `/configuracion`) se
+usa como título de la ventana ("Control IPV — <negocio>") y como etiqueta en
+la barra de navegación.
+
+## Copias de seguridad (backups)
+
+Desde `/configuracion` el usuario puede crear backups manuales de la BD
+("Backup ahora"), descargarlos, y restaurar uno (reemplaza los datos
+actuales; la app pide reiniciarse tras restaurar porque el proceso cierra la
+conexión a la BD a propósito en vez de intentar un hot-swap). Mecánica:
+
+- `VACUUM INTO` a un `.tmp` + rename atómico (mismo patrón que la
+  importación de la BD legada de Python).
+- Se conservan como máximo 7 backups; al crear uno nuevo se borran
+  automáticamente los más viejos (`internal/appboot/backup.go`,
+  `backupsARetener`).
+- La carpeta de destino es configurable (por defecto, `<datadir>/backups`);
+  puede apuntarse a una carpeta ya sincronizada por Dropbox/Drive/similar
+  para tener una copia fuera de la máquina. Se guarda en la tabla
+  `configuracion` (columna `backup_dir`), no es una variable de entorno.
+- En escritorio, la carpeta se puede elegir con el diálogo nativo del SO
+  (`wruntime.OpenDirectoryDialog`, cableado solo en `cmd/desktop`) en vez de
+  escribirla a mano; en el despliegue web ese selector no existe (un
+  navegador no puede elegir una carpeta del disco del servidor) y el campo
+  de texto sigue siendo la única forma de fijarla.
+
 ## Compilar
 
 Wails **no** cross-compila de forma fiable: cada plataforma se compila en su
