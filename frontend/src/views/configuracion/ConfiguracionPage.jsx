@@ -95,18 +95,22 @@ const ConfiguracionPage = () => {
       // El usuario puede cancelar el diálogo nativo: el backend devuelve
       // path vacío (no es un error), así que simplemente no tocamos nada.
       if (!data.path) return;
-      setBackupDir(data.path);
       // A diferencia de escribir la ruta a mano, elegirla con el diálogo es
       // una selección deliberada y completa (nunca un valor a medio
       // escribir) — se guarda de inmediato para que "Backup ahora" la use
       // ya mismo, sin depender de que el usuario pulse "Guardar" aparte.
+      // Si el guardado falla, el campo NO se toca: mostrar la ruta elegida
+      // como si estuviera guardada cuando no lo está sería el mismo bug que
+      // se acaba de corregir (desync entre lo que se ve y lo que usa el
+      // backend), solo que más raro de disparar.
       await configuracionApi.actualizarBackupDir(data.path);
+      setBackupDir(data.path);
       showToast('Carpeta de backups actualizada.');
     } catch (err) {
       if (err.response?.status === 404) {
         showToast('El selector de carpetas no está disponible en este modo; escribe la ruta a mano.', 'danger');
       } else {
-        showToast(err.response?.data?.error || 'Error al abrir el selector de carpetas.', 'danger');
+        showToast(err.response?.data?.error || 'Error al guardar la carpeta elegida.', 'danger');
       }
     } finally {
       setEligiendoCarpeta(false);
@@ -193,7 +197,7 @@ const ConfiguracionPage = () => {
           <Button
             variant="primary"
             onClick={crearBackup}
-            disabled={creandoBackup}
+            disabled={creandoBackup || restaurando !== null}
             className="d-inline-flex align-items-center gap-2"
           >
             {creandoBackup ? <Spinner animation="border" size="sm" /> : <PlusIcon size={15} />}
