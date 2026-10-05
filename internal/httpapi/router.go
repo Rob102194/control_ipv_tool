@@ -27,6 +27,8 @@ type Deps struct {
 	// extensión para el despliegue web (autenticación / multi-tenant). En
 	// escritorio es nil. Ver docs/web-roadmap.md.
 	AuthMiddleware func(http.Handler) http.Handler
+	// Backups habilita /api/backups (crear/listar/descargar/restaurar).
+	Backups BackupManager
 }
 
 // NewRouter arma el http.Handler de la aplicación: middleware transversal, el
@@ -43,7 +45,7 @@ func NewRouter(d Deps) http.Handler {
 	r.Get("/healthz", healthHandler(d))
 
 	if d.Services != nil {
-		a := &api{svc: d.Services, logger: d.Logger}
+		a := &api{svc: d.Services, logger: d.Logger, backups: d.Backups}
 		r.Route("/api", func(r chi.Router) {
 			if d.AuthMiddleware != nil {
 				r.Use(d.AuthMiddleware)
@@ -120,6 +122,12 @@ func mountAPI(r chi.Router, a *api) {
 	// Configuración del negocio (nuevo, sin paridad con la versión Python)
 	r.Get("/configuracion", a.configuracionGet)
 	r.Put("/configuracion", a.configuracionUpdate)
+
+	// Backups (nuevo, sin paridad con la versión Python)
+	r.Get("/backups", a.backupsList)
+	r.Post("/backups", a.backupsCreate)
+	r.Get("/backups/{nombre}/download", a.backupsDownload)
+	r.Post("/backups/{nombre}/restore", a.backupsRestore)
 }
 
 // healthHandler reporta el estado del proceso y verifica la BD.

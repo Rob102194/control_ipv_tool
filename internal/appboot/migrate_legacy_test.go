@@ -93,15 +93,15 @@ func TestImportLegacyYBaseline(t *testing.T) {
 
 	// goose sella 00001 (esquema, ya existente) sin recrear tablas, y luego
 	// SÍ aplica 00002 (migración de datos: unifica unidad_medida "U" en
-	// "UNIDADES") y 00003 (tabla configuracion) con normalidad, igual que en
-	// una BD nueva.
+	// "UNIDADES"), 00003 (tabla configuracion) y 00004 (columna
+	// configuracion.backup_dir) con normalidad, igual que en una BD nueva.
 	var v int64
 	if err := app.DB.QueryRow(
 		"SELECT MAX(version_id) FROM goose_db_version WHERE is_applied = 1").Scan(&v); err != nil {
 		t.Fatalf("leyendo goose_db_version: %v", err)
 	}
-	if v != 3 {
-		t.Fatalf("versión de goose = %d, se esperaba 3", v)
+	if v != 4 {
+		t.Fatalf("versión de goose = %d, se esperaba 4", v)
 	}
 
 	// Los datos se conservan y fluyen por la API Go.
@@ -144,7 +144,7 @@ func TestImportLegacyYBaseline(t *testing.T) {
 	t.Cleanup(func() { _ = app2.Close() })
 	var v2 int64
 	app2.DB.QueryRow("SELECT MAX(version_id) FROM goose_db_version").Scan(&v2)
-	if v2 != 3 {
+	if v2 != 4 {
 		t.Fatalf("segunda pasada: versión = %d", v2)
 	}
 }

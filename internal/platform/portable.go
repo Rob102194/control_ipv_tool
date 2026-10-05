@@ -48,7 +48,7 @@ func portableDataDirFor(exePath string) (string, bool) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", false
 	}
-	if !dirIsWritable(dir) {
+	if !DirIsWritable(dir) {
 		return "", false
 	}
 	return dir, true
@@ -61,10 +61,11 @@ func isInsideMacAppBundle(p string) bool {
 	return strings.Contains(p, ".app"+sep+"Contents"+sep+"MacOS"+sep)
 }
 
-// dirIsWritable comprueba permiso de escritura real (no solo los bits de
+// DirIsWritable comprueba permiso de escritura real (no solo los bits de
 // permisos, que en Windows no reflejan fielmente ACLs/Program Files):
-// intenta crear y borrar un fichero temporal dentro de dir.
-func dirIsWritable(dir string) bool {
+// intenta crear y borrar un fichero temporal dentro de dir. La usa también
+// backup.go al resolver un directorio de backups configurado a mano.
+func DirIsWritable(dir string) bool {
 	f, err := os.CreateTemp(dir, ".write-test-*")
 	if err != nil {
 		return false
@@ -74,4 +75,3 @@ func dirIsWritable(dir string) bool {
 	_ = os.Remove(name)
 	return true
 }
-

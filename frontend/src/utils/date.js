@@ -25,3 +25,14 @@ export function formatDateAyer() {
     ayer.setDate(ayer.getDate() - 1);
     return formatDateLocal(ayer);
 }
+
+// Formatea un timestamp ISO/RFC3339 completo (con hora) en español y hora
+// local del navegador, p. ej. "4 de octubre de 2026, 15:30". A diferencia de
+// formatDateEs, aquí SÍ conviene usar el Date nativo del string ISO
+// directamente (trae zona horaria explícita, no hay ambigüedad que corregir).
+export function formatDateTimeEs(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('es-ES', {
+        day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+}

@@ -24,8 +24,9 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 
 // api agrupa los handlers HTTP sobre los servicios de casos de uso.
 type api struct {
-	svc    *usecases.Services
-	logger *slog.Logger
+	svc     *usecases.Services
+	logger  *slog.Logger
+	backups BackupManager
 }
 
 func (a *api) fail(w http.ResponseWriter, r *http.Request, err error) {
@@ -497,11 +498,11 @@ func (a *api) configuracionGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *api) configuracionUpdate(w http.ResponseWriter, r *http.Request) {
-	var in configuracionDTO
+	var in configuracionUpdateDTO
 	if !a.decode(w, r, &in) {
 		return
 	}
-	c, err := a.svc.Configuracion.Actualizar(r.Context(), in.NombreNegocio)
+	c, err := a.svc.Configuracion.Actualizar(r.Context(), in.NombreNegocio, in.BackupDir)
 	if err != nil {
 		a.fail(w, r, err)
 		return

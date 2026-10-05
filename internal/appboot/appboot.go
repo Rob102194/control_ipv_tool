@@ -80,6 +80,8 @@ func NewWithOptions(cfg platform.Config, logger *slog.Logger, opts Options) (*Ap
 		IDs:   platform.UUIDGen{},
 	})
 
+	bm := &backupManager{db: db, dbPath: dbPath, cfgSvc: services.Configuracion, logger: logger}
+
 	router := httpapi.NewRouter(httpapi.Deps{
 		Logger:         logger,
 		DB:             db,
@@ -88,6 +90,7 @@ func NewWithOptions(cfg platform.Config, logger *slog.Logger, opts Options) (*Ap
 		SchemaVersion:  func() (int64, error) { return sqlite.SchemaVersion(db) },
 		SPA:            opts.SPA,
 		AuthMiddleware: opts.AuthMiddleware,
+		Backups:        bm,
 	})
 
 	return &App{Handler: router, DB: db, DBPath: dbPath, Logger: logger, Services: services}, nil

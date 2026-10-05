@@ -352,10 +352,22 @@ type importVentasDTO struct {
 
 type configuracionDTO struct {
 	NombreNegocio string `json:"nombre_negocio"`
+	BackupDir     string `json:"backup_dir"`
 }
 
 func toConfiguracionDTO(c domain.Configuracion) configuracionDTO {
-	return configuracionDTO{NombreNegocio: c.NombreNegocio}
+	return configuracionDTO{NombreNegocio: c.NombreNegocio, BackupDir: c.BackupDir}
+}
+
+// configuracionUpdateDTO es una actualización PARCIAL: un campo en nil (el
+// cliente lo omitió del JSON) significa "no tocar este valor" — distinto de
+// una cadena vacía explícita, que sí borra el valor. Así, la etiqueta de
+// nombre de negocio en la barra de navegación puede actualizar solo
+// nombre_negocio sin arrasar backup_dir, y la página de ajustes puede hacer
+// lo inverso.
+type configuracionUpdateDTO struct {
+	NombreNegocio *string `json:"nombre_negocio"`
+	BackupDir     *string `json:"backup_dir"`
 }
 
 // modelo IPV

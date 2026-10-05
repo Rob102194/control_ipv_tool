@@ -6,12 +6,15 @@ import App from './App.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import { ToastProvider } from './contexts/ToastContext.jsx';
 import { ConfirmProvider } from './contexts/ConfirmContext.jsx';
+import { RestoreLockProvider } from './contexts/RestoreLockContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <ThemeProvider>
     <ToastProvider>
       <ConfirmProvider>
-        <App />
+        <RestoreLockProvider>
+          <App />
+        </RestoreLockProvider>
       </ConfirmProvider>
     </ToastProvider>
   </ThemeProvider>
